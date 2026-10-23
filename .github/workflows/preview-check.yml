@@ -1,0 +1,31 @@
+name: CEO-CL Preview Checks
+on:
+  pull_request:
+    paths:
+      - 'app/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'supabase/**'
+      - 'package*.json'
+      - 'vite.config.js'
+      - '.github/workflows/preview-check.yml'
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run test
+      - run: npm run build
+      - name: Ensure production entry remains unchanged in this PR
+        run: |
+          git diff --exit-code -- index.html
+          test -f dist/index.html
+          test -f dist/brand/yonggang-mascot.png

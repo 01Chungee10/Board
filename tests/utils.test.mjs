@@ -1,0 +1,11 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { applyFilters, relativeTime, displayName, replyBadge, validPost } from '../app/src/utils.js';
+const a = {id:'a',kind:'question',title:'의견 제안',content:'내용입니다',author_name:'홍길동',is_anonymous:true,status:'open',reaction_count:2,created_at:'2026-10-22T06:00:00Z',replies:[{author_role:'ceo'}]};
+const b = {id:'b',kind:'idea',title:'업무 개선',content:'나눔',author_name:'박모씨',status:'open',reaction_count:8,created_at:'2026-10-23T06:00:00Z',replies:[]};
+test('anonymous display is redacted',()=>assert.equal(displayName(a),'익명 CL'));
+test('filters show only CEO-answered posts',()=>assert.deepEqual(applyFilters([a,b],{view:'answered'}).map(x=>x.id),['a']));
+test('category and sort are respected',()=>assert.deepEqual(applyFilters([a,b],{category:'idea',sort:'popular'}).map(x=>x.id),['b']));
+test('CEO badge derives from role',()=>{assert.equal(replyBadge('ceo'),'CEO 답변');assert.equal(replyBadge('cl'),'CL 의견');});
+test('post must have meaningful title and body',()=>{assert.equal(validPost('아','짧음'),false);assert.equal(validPost('새로운 아이디어','진행 과정을 공유하는 방식을 제안합니다.'),true);});
+test('relative timestamp',()=>assert.equal(relativeTime('2026-10-23T07:59:00Z',new Date('2026-10-23T08:00:00Z').getTime()),'1분 전'));

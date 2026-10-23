@@ -1,0 +1,26 @@
+{
+  "name": "hyundai-steel-ceo-cl-townhall",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "node --test tests/*.test.mjs",
+    "stage:preview": "npm run build && node scripts/stage-preview.mjs",
+    "brand:build": "node scripts/build-brand-art.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.75.1",
+    "lucide-react": "^0.468.0",
+    "qrcode.react": "^4.2.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "playwright": "^1.64.1",
+    "sharp": "^0.35.5",
+    "vite": "^7.1.5"
+  }
+}
