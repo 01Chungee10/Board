@@ -1,0 +1,31 @@
+name: CEO-CL Preview Checks
+on:
+  pull_request:
+    paths:
+      - 'app/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'supabase/**'
+      - 'package*.json'
+      - 'vite.config.js'
+      - '.github/workflows/preview-check.yml'
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run test
+      - run: npm run build
+      - name: Verify production output includes brand assets
+        run: |
+          test -f dist/index.html
+          test -f dist/brand/yonggang-mascot.png
+          grep -q "현대제철 CEO" dist/index.html
