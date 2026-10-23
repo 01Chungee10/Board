@@ -1,3 +1,4 @@
+import EntryDialog from './EntryDialog.jsx';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   ArrowRight, BellRing, Check, CheckCircle2, ChevronDown, ChevronLeft, CircleHelp,
@@ -11,6 +12,8 @@ import {CATEGORIES,CATEGORY_LABELS,MEETING_SLUG,createPreviewData} from './data.
 import {applyFilters,displayName,isStaff,relativeTime,replyBadge,validPost} from './utils.js';
 
 const BRAND = '/Board/brand/';
+const DEMO_ENABLED = import.meta.env.DEV || import.meta.env.VITE_SHOW_DEMO === 'true';
+const initialPosts = () => DEMO_ENABLED ? createPreviewData() : [];
 
 function IconLabel({icon:Icon,children}) {return <span className="icon-label"><Icon size={15} strokeWidth={1.8}/>{children}</span>;}
 function getStatusText(online,preview) {return preview ? '화면 미리보기' : online ? '실시간 연결 중' : '연결 확인 중';}
@@ -21,28 +24,13 @@ function Dialog({children,onClose,className=''}) {
   return <div className="dialog-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)onClose();}}><div className={`dialog ${className}`} role="dialog" aria-modal="true">{children}</div></div>;
 }
 
-function LoginDialog({onClose,onSuccess}) {
-  const [email,setEmail]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[sent,setSent]=useState(false);
-  const submit=async e=>{e.preventDefault();setError('');setBusy(true);try{
-    if(!/^\S+@\S+\.\S+$/.test(email))throw new Error('올바른 이메일 주소를 입력해 주세요.');
-    if(!supabase)throw new Error('회의용 보안 데이터베이스 연결 준비 후 인증을 이용할 수 있습니다.');
-    const {error:authError}=await supabase.auth.signInWithOtp({email:email.trim(),options:{shouldCreateUser:false,emailRedirectTo:window.location.href.split('#')[0]}});
-    if(authError) throw authError;
-    setSent(true);onSuccess?.();
-  }catch(err){setError(err.message||'로그인 메일을 보낼 수 없습니다.');}finally{setBusy(false);}};
-  return <Dialog onClose={onClose} className="login-dialog">
-    <div className="modal-heading"><div className="modal-icon"><LockKeyhole size={22}/></div><button className="bare-icon" onClick={onClose} aria-label="닫기"><X size={20}/></button></div>
-    {sent?<div className="login-sent"><CheckCircle2 size={42}/><h2>인증 메일을 확인해 주세요.</h2><p>초대된 계정으로 로그인 링크를 전송했습니다. 메일의 링크를 열면 이 화면으로 돌아옵니다.</p><button className="solid-button" onClick={onClose}>확인</button></div>:
-    <><h2>회의 공간 입장</h2><p className="modal-description">CEO–CL 미팅은 초대된 구성원만 참여할 수 있습니다. 등록된 업무용 이메일로 인증 링크를 받으세요.</p><form onSubmit={submit} className="auth-form"><label htmlFor="login-email">초대받은 이메일</label><input id="login-email" autoComplete="email" type="email" required placeholder="name@company.com" value={email} onChange={e=>setEmail(e.target.value)} /><p className="field-hint">등록된 이메일만 입장할 수 있습니다. 개인용 이메일은 사용할 수 없습니다.</p>{error&&<p className="form-error">{error}</p>}<button className="solid-button" type="submit" disabled={busy}>{busy?'전송 중…':'인증 링크 받기'}<ArrowRight size={16}/></button></form><div className="auth-note"><ShieldCheck size={17}/><span>접근 권한은 서버에서 검증합니다. 닉네임으로 CEO 권한을 설정할 수 없습니다.</span></div></>}
-  </Dialog>;
-}
 
 function QRDialog({onClose}) {const url=window.location.origin+window.location.pathname;return <Dialog onClose={onClose} className="qr-dialog"><div className="modal-bar"><h2>모바일로 참여하기</h2><button className="bare-icon" onClick={onClose} aria-label="닫기"><X size={19}/></button></div><div className="qr-body"><div className="qr-frame"><QRCodeSVG value={url} size={220} fgColor="#002D62" bgColor="#ffffff" level="M" /></div><p>스마트폰 카메라로 QR 코드를 스캔하세요.</p><span className="qr-url">{url}</span></div></Dialog>;}
 
 function ComposeDialog({onClose,onSubmit,submitting,preview,onNeedLogin}) {
   const [kind,setKind]=useState('question'),[title,setTitle]=useState(''),[content,setContent]=useState(''),[anonymous,setAnonymous]=useState(true),[error,setError]=useState('');
   const submit=async e=>{e.preventDefault();if(preview){onNeedLogin();return;}if(!validPost(title,content)){setError('제목은 4~120자, 본문은 10~3,000자로 작성해 주세요.');return;}const okay=await onSubmit({kind,title:title.trim(),content:content.trim(),is_anonymous:anonymous});if(okay)onClose();else setError('등록하지 못했습니다. 잠시 후 다시 시도해 주세요.');};
-  return <Dialog onClose={onClose} className="compose-dialog"><div className="modal-bar"><div><span className="eyebrow">NEW CONVERSATION</span><h2>이야기 남기기</h2></div><button className="bare-icon" onClick={onClose} aria-label="닫기"><X size={21}/></button></div><form onSubmit={submit}><div className="compose-body"><p className="compose-intro">작은 질문 하나가 의미 있는 변화의 출발점이 됩니다.</p><label>이야기 유형</label><div className="kind-picker">{CATEGORIES.slice(1).map(c=><button type="button" key={c.id} className={kind===c.id?'kind-choice selected':'kind-choice'} onClick={()=>setKind(c.id)}>{c.label}</button>)}</div><label htmlFor="compose-title">제목</label><input id="compose-title" autoFocus required maxLength="120" placeholder="함께 이야기하고 싶은 주제를 적어주세요" value={title} onChange={e=>setTitle(e.target.value)} /><div className="counter">{title.length} / 120</div><label htmlFor="compose-content">내용</label><textarea id="compose-content" required rows="6" maxLength="3000" placeholder="어떤 경험이나 고민에서 출발한 이야기인가요? 구체적으로 적어주세요." value={content} onChange={e=>setContent(e.target.value)} /><div className="counter">{content.length} / 3,000</div><label className="anon-switch"><input type="checkbox" checked={anonymous} onChange={e=>setAnonymous(e.target.checked)}/><span className="switch-track"/><span><strong>다른 참가자에게 익명으로 표시</strong><small>참가자는 작성자를 볼 수 없지만, 운영 정책에 따라 관리자는 작성자를 확인할 수 있습니다.</small></span></label>{error&&<p className="form-error">{error}</p>}{preview&&<div className="compose-preview-note"><LockKeyhole size={17}/> 실제 작성은 초대 계정으로 입장한 후 가능합니다.</div>}</div><div className="compose-footer"><button type="button" className="outline-button" onClick={onClose}>취소</button><button type="submit" className="solid-button" disabled={submitting}>{submitting?'등록 중…':preview?'입장하고 작성하기':'이야기 등록'}<Send size={16}/></button></div></form></Dialog>;
+  return <Dialog onClose={onClose} className="compose-dialog"><div className="modal-bar"><div><span className="eyebrow">NEW CONVERSATION</span><h2>이야기 남기기</h2></div><button className="bare-icon" onClick={onClose} aria-label="닫기"><X size={21}/></button></div><form onSubmit={submit}><div className="compose-body"><p className="compose-intro">작은 질문 하나가 의미 있는 변화의 출발점이 됩니다.</p><label>이야기 유형</label><div className="kind-picker">{CATEGORIES.slice(1).map(c=><button type="button" key={c.id} className={kind===c.id?'kind-choice selected':'kind-choice'} onClick={()=>setKind(c.id)}>{c.label}</button>)}</div><label htmlFor="compose-title">제목</label><input id="compose-title" autoFocus required maxLength="120" placeholder="함께 이야기하고 싶은 주제를 적어주세요" value={title} onChange={e=>setTitle(e.target.value)} /><div className="counter">{title.length} / 120</div><label htmlFor="compose-content">내용</label><textarea id="compose-content" required rows="6" maxLength="3000" placeholder="어떤 경험이나 고민에서 출발한 이야기인가요? 구체적으로 적어주세요." value={content} onChange={e=>setContent(e.target.value)} /><div className="counter">{content.length} / 3,000</div><label className="anon-switch"><input type="checkbox" checked={anonymous} onChange={e=>setAnonymous(e.target.checked)}/><span className="switch-track"/><span><strong>다른 참가자에게 익명으로 표시</strong><small>참가자는 작성자를 볼 수 없지만, 운영 정책에 따라 관리자는 작성자를 확인할 수 있습니다.</small></span></label>{error&&<p className="form-error">{error}</p>}{preview&&<div className="compose-preview-note"><LockKeyhole size={17}/> 실제 작성은 현장 참여코드로 입장한 후 가능합니다.</div>}</div><div className="compose-footer"><button type="button" className="outline-button" onClick={onClose}>취소</button><button type="submit" className="solid-button" disabled={submitting}>{submitting?'등록 중…':preview?'입장하고 작성하기':'이야기 등록'}<Send size={16}/></button></div></form></Dialog>;
 }
 
 function ReplyCard({reply}) {const isCeo=reply.author_role==='ceo',isModerator=reply.author_role==='moderator';return <div className={`reply-card ${isCeo?'ceo-reply':''}`}><div className="reply-heading"><div className={isCeo?'reply-avatar ceo-avatar':'reply-avatar'}>{isCeo?<Mic2 size={17}/>:isModerator?<ShieldCheck size={16}/>:<UsersRound size={16}/>}</div><div className="reply-person"><div className="reply-name">{isCeo?'CEO':isModerator?'운영진':reply.is_anonymous?'익명 CL':(reply.author_name||'Change Leader')}{isCeo&&<span className="verified"><Check size={11}/>{replyBadge(reply.author_role)}</span>}</div><div className="reply-when">{dateDisplay(reply.created_at)}</div></div></div><p className="reply-text">{reply.content||reply.body}</p></div>}
@@ -60,14 +48,16 @@ function PostCard({post,onSelect,onLike,preview,onNeedLogin}) {
 }
 
 function App() {
-  const [session,setSession]=useState(null),[authReady,setAuthReady]=useState(false),[member,setMember]=useState(null),[meeting,setMeeting]=useState(null);
-  const [posts,setPosts]=useState(createPreviewData),[loading,setLoading]=useState(false),[syncing,setSyncing]=useState(false),[realtime,setRealtime]=useState(false),[dbIssue,setDbIssue]=useState('');
+  const [session,setSession]=useState(null),[authReady,setAuthReady]=useState(false),[member,setMember]=useState(null),[meeting,setMeeting]=useState(null),[accessRevision,setAccessRevision]=useState(0);
+  const [posts,setPosts]=useState(initialPosts),[loading,setLoading]=useState(false),[syncing,setSyncing]=useState(false),[realtime,setRealtime]=useState(false),[dbIssue,setDbIssue]=useState('');
   const [category,setCategory]=useState('all'),[view,setView]=useState('all'),[sort,setSort]=useState('latest'),[search,setSearch]=useState('');
   const [composeOpen,setComposeOpen]=useState(false),[qrOpen,setQrOpen]=useState(false),[loginOpen,setLoginOpen]=useState(false),[detailId,setDetailId]=useState(null),[busy,setBusy]=useState(false),[toast,setToast]=useState(''),[screenMode,setScreenMode]=useState(false);
   const refreshTimer=useRef(null);
+  const [inviteFromUrl]=useState(()=>new URLSearchParams(window.location.search).get('join')||'');
   const preview=!member || !meeting;
   const showToast=msg=>setToast(msg);
   useEffect(()=>{const timer=toast&&setTimeout(()=>setToast(''),3600);return()=>clearTimeout(timer);},[toast]);
+  useEffect(()=>{if(inviteFromUrl){const url=new URL(window.location.href);url.searchParams.delete('join');window.history.replaceState({},'',url.pathname+url.search+url.hash);setLoginOpen(true);}},[inviteFromUrl]);
 
   useEffect(()=>{
     let alive=true;
@@ -79,7 +69,7 @@ function App() {
 
   useEffect(()=>{
     let active=true;
-    if(!session?.user?.id){setMember(null);setMeeting(null);setPosts(createPreviewData());return;}
+    if(!session?.user?.id){setMember(null);setMeeting(null);setPosts(initialPosts());return;}
     (async()=>{setLoading(true);setDbIssue('');
       try{
         const {data:me,error:mErr}=await supabase.from('meeting_members').select('user_id,display_name,role,is_active').eq('user_id',session.user.id).maybeSingle();
@@ -95,7 +85,7 @@ function App() {
       }catch(err){if(active){setDbIssue('setup');setMember(null);setMeeting(null);console.error('Meeting setup:',err?.message||err);}}finally{if(active)setLoading(false);}
     })();
     return()=>{active=false;};
-  },[session?.user?.id]);
+  },[session?.user?.id,accessRevision]);
 
   const refresh=useCallback(async (quiet=false)=>{
     if(!member||!meeting)return;
@@ -151,8 +141,9 @@ function App() {
     if(error){showToast('숨기기 처리에 실패했습니다.');return;}
     setDetailId(null);await refresh(true);showToast('게시글을 숨겼습니다.');
   };
-  const signOut=async()=>{if(supabase)await supabase.auth.signOut();setSession(null);setMember(null);setMeeting(null);setPosts(createPreviewData());setDetailId(null);showToast('로그아웃했습니다.');};
+  const signOut=async()=>{if(supabase)await supabase.auth.signOut();setSession(null);setMember(null);setMeeting(null);setPosts(initialPosts());setDetailId(null);showToast('로그아웃했습니다.');};
   const previewGate=()=>{setComposeOpen(false);setDetailId(null);setLoginOpen(true);};
+  const afterEntry=()=>{setAccessRevision(x=>x+1);setLoginOpen(false);showToast('회의에 입장했습니다. 실시간 대화를 확인해 주세요.');};
 
   const filtered=useMemo(()=>applyFilters(posts,{category,sort,search,view}),[posts,category,sort,search,view]);
   const answeredCount=posts.filter(p=>(p.replies||[]).some(x=>x.author_role==='ceo')).length;
@@ -162,12 +153,12 @@ function App() {
 
   return <div className={`app-shell ${screenMode?'projector-mode':''}`}>
     <div className="topline"/>
-    <header className="site-header"><div className="header-inner"><div className="identity"><img className="corporate-logo" src={`${BRAND}hyundai-steel-ci.png`} alt="현대제철 HYUNDAI STEEL"/><div className="identity-separator"/><div className="brand-program"><span>PEOPLE & CULTURE</span><strong>CEO × CL DIALOGUE</strong></div></div><nav className="site-actions" aria-label="사이트 메뉴"><span className={`connection-pill ${realtime?'connected':''}`}><span className="connection-dot"/>{getStatusText(realtime,preview)}</span><button className="header-icon-button" onClick={()=>setQrOpen(true)} title="QR 코드"><QrCode size={19}/><span>모바일 참여</span></button>{member?<button className="header-icon-button" onClick={signOut}><LogOut size={18}/><span>나가기</span></button>:<button className="header-login" onClick={()=>setLoginOpen(true)}><LogIn size={16}/> 구성원 입장</button>}</nav></div></header>
+    <header className="site-header"><div className="header-inner"><div className="identity"><img className="corporate-logo" src={`${BRAND}hyundai-steel-ci.png`} alt="현대제철 HYUNDAI STEEL"/><div className="identity-separator"/><div className="brand-program"><span>PEOPLE & CULTURE</span><strong>CEO × CL DIALOGUE</strong></div></div><nav className="site-actions" aria-label="사이트 메뉴"><span className={`connection-pill ${realtime?'connected':''}`}><span className="connection-dot"/>{getStatusText(realtime,preview)}</span><button className="header-icon-button" onClick={()=>setQrOpen(true)} title="QR 코드"><QrCode size={19}/><span>모바일 참여</span></button>{member?.role==='ceo'&&<span className="connection-pill connected"><ShieldCheck size={13}/> CEO 공식 답변 권한</span>}{member?<button className="header-icon-button" onClick={signOut}><LogOut size={18}/><span>{member.role==='ceo'?'CEO 퇴장':'나가기'}</span></button>:<button className="header-login" onClick={()=>setLoginOpen(true)}><LogIn size={16}/> 회의 입장</button>}</nav></div></header>
 
     <main className="page-wrap">
       <section className="hero"><div className="hero-copy"><div className="hero-kicker"><span className="hero-live-dot"/>HYUNDAI STEEL · OPEN CONVERSATION</div><h1>현대제철 <span>CEO–CL</span><br/>온라인 미팅</h1><p className="hero-description">우리의 질문이 변화를 만들고,<br className="mobile-only"/> 진솔한 대화가 내일을 움직입니다.</p><div className="hero-buttons"><button className="hero-primary" onClick={()=>meetingOpen?setComposeOpen(true):showToast('현재 질문 접수 시간이 아닙니다.')}><Plus size={19}/> 질문 · 의견 남기기 <ArrowRight size={17}/></button><button className="hero-secondary" onClick={()=>setQrOpen(true)}><QrCode size={19}/> QR로 참여하기</button></div></div><div className="hero-illustration" aria-hidden="true"><span className="hero-glow"/><img src={`${BRAND}yonggang-mascot.png`} alt=""/><div className="hero-speech"><MessageSquareQuote size={17}/><span>마음껏 이야기해요!</span></div></div><span className="hero-decoration decoration-1"/><span className="hero-decoration decoration-2"/></section>
 
-      {preview&&<div className="preview-banner"><div className="preview-left"><span className="preview-icon"><LockKeyhole size={17}/></span><div><strong>디자인 미리보기 · 아래 글과 답변은 모두 가상의 예시입니다.</strong><span>{dbIssue==='setup'?'현재 회의 데이터베이스 설정 또는 연결을 확인해야 합니다.':'실제 게시글은 초대된 구성원으로 인증한 후에만 표시됩니다.'}</span></div></div><button onClick={()=>setLoginOpen(true)}>초대 계정으로 입장 <ArrowRight size={15}/></button></div>}
+      {preview&&<div className="preview-banner"><div className="preview-left"><span className="preview-icon"><LockKeyhole size={17}/></span><div><strong>{DEMO_ENABLED?'디자인 미리보기 · 표시된 글은 예시입니다.':'회의 참가자 인증이 필요합니다.'}</strong><span>{dbIssue==='setup'?'현재 회의 데이터베이스 설정 또는 연결을 확인해야 합니다.':'현장 참여코드로 입장하면 실제 실시간 질문과 CEO 답변을 확인할 수 있습니다.'}</span></div></div><button onClick={()=>setLoginOpen(true)}>회의 참여하기 <ArrowRight size={15}/></button></div>}
       {!preview&&dbIssue==='data'&&<div className="warning-banner"><BellRing size={17}/> 서버 연결이 원활하지 않습니다. 최신 게시글이 잠시 표시되지 않을 수 있습니다. <button onClick={()=>refresh()}>다시 연결</button></div>}
       {!preview&&!meeting?.is_open&&<div className="warning-banner"><Clock3 size={17}/> 현재 질문 접수가 종료되었습니다. 기존 질문과 답변은 열람할 수 있습니다.</div>}
 
@@ -188,7 +179,7 @@ function App() {
     {toast&&<div className="toast" role="status"><CheckCircle2 size={18}/>{toast}<button onClick={()=>setToast('')} aria-label="닫기"><X size={16}/></button></div>}
     {composeOpen&&<ComposeDialog onClose={()=>setComposeOpen(false)} onSubmit={createPost} submitting={busy} preview={preview} onNeedLogin={previewGate}/>}
     {detailId&&currentPost&&<ThreadDialog key={detailId} post={currentPost} onClose={()=>setDetailId(null)} member={member} preview={preview} onAddReply={addReply} onLike={like} onHide={hide} onNeedLogin={previewGate} busy={busy}/>}
-    {loginOpen&&<LoginDialog onClose={()=>setLoginOpen(false)} onSuccess={()=>showToast('인증 메일이 전송되었습니다.')}/>}
+    {loginOpen&&<EntryDialog onClose={()=>setLoginOpen(false)} onEntered={afterEntry} session={session} initialInvite={inviteFromUrl}/>}
     {qrOpen&&<QRDialog onClose={()=>setQrOpen(false)}/>}
   </div>;
 }

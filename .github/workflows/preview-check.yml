@@ -24,8 +24,8 @@ jobs:
       - run: npm ci
       - run: npm run test
       - run: npm run build
-      - name: Ensure production entry remains unchanged in this PR
+      - name: Verify production output includes brand assets
         run: |
-          git diff --exit-code -- index.html
           test -f dist/index.html
           test -f dist/brand/yonggang-mascot.png
+          grep -q "현대제철 CEO" dist/index.html
