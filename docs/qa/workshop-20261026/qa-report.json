@@ -1,0 +1,162 @@
+[
+  {
+    "width": 320,
+    "status": 200,
+    "overflow": false,
+    "title": "현대제철 CEO–CL 온라인 워크숍",
+    "logoLoaded": true,
+    "mascotLoaded": true,
+    "loginControls": false,
+    "h1": "온라인 워크숍",
+    "form": {
+      "top": 195,
+      "height": 211
+    },
+    "feed": {
+      "top": 425,
+      "height": 246
+    },
+    "fonts": {
+      "heading": "25px",
+      "input": "16px",
+      "send": "15px",
+      "timeline": "22px"
+    },
+    "numberOfSidebarModules": 0,
+    "errors": []
+  },
+  {
+    "width": 375,
+    "status": 200,
+    "overflow": false,
+    "title": "현대제철 CEO–CL 온라인 워크숍",
+    "logoLoaded": true,
+    "mascotLoaded": true,
+    "loginControls": false,
+    "h1": "온라인 워크숍",
+    "form": {
+      "top": 200,
+      "height": 211
+    },
+    "feed": {
+      "top": 430,
+      "height": 246
+    },
+    "fonts": {
+      "heading": "29px",
+      "input": "16px",
+      "send": "15px",
+      "timeline": "22px"
+    },
+    "numberOfSidebarModules": 0,
+    "errors": []
+  },
+  {
+    "width": 390,
+    "status": 200,
+    "overflow": false,
+    "title": "현대제철 CEO–CL 온라인 워크숍",
+    "logoLoaded": true,
+    "mascotLoaded": true,
+    "loginControls": false,
+    "h1": "온라인 워크숍",
+    "form": {
+      "top": 200,
+      "height": 211
+    },
+    "feed": {
+      "top": 430,
+      "height": 246
+    },
+    "fonts": {
+      "heading": "29px",
+      "input": "16px",
+      "send": "15px",
+      "timeline": "22px"
+    },
+    "numberOfSidebarModules": 0,
+    "errors": []
+  },
+  {
+    "width": 430,
+    "status": 200,
+    "overflow": false,
+    "title": "현대제철 CEO–CL 온라인 워크숍",
+    "logoLoaded": true,
+    "mascotLoaded": true,
+    "loginControls": false,
+    "h1": "온라인 워크숍",
+    "form": {
+      "top": 200,
+      "height": 211
+    },
+    "feed": {
+      "top": 430,
+      "height": 246
+    },
+    "fonts": {
+      "heading": "29px",
+      "input": "16px",
+      "send": "15px",
+      "timeline": "22px"
+    },
+    "numberOfSidebarModules": 0,
+    "errors": []
+  },
+  {
+    "width": 768,
+    "status": 200,
+    "overflow": false,
+    "title": "현대제철 CEO–CL 온라인 워크숍",
+    "logoLoaded": true,
+    "mascotLoaded": true,
+    "loginControls": false,
+    "h1": "온라인 워크숍",
+    "form": {
+      "top": 256,
+      "height": 237
+    },
+    "feed": {
+      "top": 517,
+      "height": 278
+    },
+    "fonts": {
+      "heading": "35px",
+      "input": "16px",
+      "send": "15px",
+      "timeline": "24px"
+    },
+    "numberOfSidebarModules": 0,
+    "errors": []
+  },
+  {
+    "width": 1440,
+    "status": 200,
+    "overflow": false,
+    "title": "현대제철 CEO–CL 온라인 워크숍",
+    "logoLoaded": true,
+    "mascotLoaded": true,
+    "loginControls": false,
+    "h1": "온라인 워크숍",
+    "form": {
+      "top": 256,
+      "height": 237
+    },
+    "feed": {
+      "top": 517,
+      "height": 278
+    },
+    "fonts": {
+      "heading": "35px",
+      "input": "16px",
+      "send": "15px",
+      "timeline": "24px"
+    },
+    "numberOfSidebarModules": 0,
+    "errors": []
+  },
+  {
+    "hostDialog": true,
+    "hostCodeInputFont": "16px"
+  }
+]

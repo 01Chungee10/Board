@@ -1,101 +1,68 @@
-# 현대제철 CEO–CL 온라인 미팅
+# 현대제철 CEO–CL 온라인 워크숍
 
-**서비스:** https://01chungee10snu.github.io/Board/
+- **운영 사이트:** https://01chungee10snu.github.io/Board/
+- **화면명:** 온라인 워크숍
+- **핵심 흐름:** 질문 작성 → 최신순 타임라인 → CEO 공식 답변
 
-현대제철 Change Leader(CL)가 현장 질문을 남기고, CEO가 직접 질문을 선택해 답변을 게시하는 실시간 타운홀 웹앱. GitHub Pages(프런트엔드) + 별도 Supabase(데이터/Auth/Realtime)로 운영.
+## 참가자 사용 방식
 
-## 배포 아키텍처
+1. 위 주소로 접속합니다. **이메일, 회원가입, 이름 또는 참여코드를 입력하지 않습니다.**
+2. 화면 상단의 질문 입력란에 질문을 쓰고 **질문 등록**을 누릅니다.
+3. 모든 참가자가 같은 타임라인에서 질문과 CEO 답변을 실시간으로 확인합니다.
 
-- **URL:** `https://01chungee10snu.github.io/Board/` / GitHub Pages `gh-pages` 브랜치
-- **Frontend:** React 19, Vite, 회사 CI + 용강이 원화에서 제작한 배경/캐릭터, 흰색/Pantone 288C
-- **Backend:** `nianjjguagrddzbelcao` (Supabase, Seoul `ap-northeast-2`)
-- **Table isolation:** 신규 `meeting_*` 테이블만 사용. 과거 Board `posts/comments`와 테스트 DB는 사용하지 않음
-- **Realtime:** Supabase Postgres Changes 구독, 네트워크 장애 시 15초 주기 자동 갱신
-- **Validation:** 2026-10-23 React 빌드/단위테스트 6개 PASS, 브라우저 QR/현장코드/실제 질문·댓글·공감 확인, 다른 기기로 INSERT 이벤트 수신 확인
+사이트는 보이지 않는 Supabase 익명 세션을 자동 생성해 서버 권한 정책(RLS)을 적용합니다. 이는 참가자에게 별도 인증 절차를 요구하는 것이 아닙니다. 사용자가 이름을 입력하거나 실명으로 노출되는 구조는 아닙니다. 별도의 데이터 삭제·접근 통제 방침은 워크숍 운영자가 수립해야 합니다.
 
-## 현장 입장
+## CEO 직접 답변
 
-### CL 참가자
+CEO는 일반 참가자 페이지가 아닌 **운영자용 접근경로**
+`https://01chungee10snu.github.io/Board/?host=1`을 열고,
+운영자가 CEO에게 직접 제공하는 1회용 전용 인증코드를 입력합니다.
 
-현장에 배포하는 초대 링크 `https://01chungee10snu.github.io/Board/?join=<참여코드>`를 열면 코드가 미리 입력된 입장창이 뜸. 이름은 선택, 기본값은 Change Leader. 입장하면 질문·댓글·공감이 즉시 활성화. 참가자에게는 게시글의 익명 이름만 표시하며, 관리자에게는 식별용 감사 매핑이 보존됨.
+코드는 GitHub, 자바스크립트, 공개 QR 등에 포함되지 않습니다. 서버의
+`private.meeting_access`와 `meeting_members`를 통해 CEO 역할이 검증됩니다.
+CEO의 질문 카드에는 공식 답변 작성 버튼이 표시되며 참가자는 답변을 읽기만 할 수 있습니다.
+CEO 코드는 **반드시 현장에서 본인에게 직접 전달**해야 합니다.
 
-코드를 URL에 포함해 배포할 경우 **이 URL을 아는 사람은 참가자 권한을 얻을 수 있습니다.** 대외 공개 게시물·온라인 검색·GitHub 소스에 포함하지 마세요.
+## 화면 설계
 
-### CEO
+- 흰색 배경과 Pantone 288C (`#002D62`), 현대제철 CI 원본, 작은 용강이 일러스트
+- **질문 입력창 한 개**, 최신 질문 타임라인과 CEO 답변만 표시
+- 기존의 통계·카테고리·검색·좋아요·QR·가이드 카드·일반 참가자 로그인 모두 제거
+- 스마트폰 320–430px를 기본으로 디자인하고, PC에서는 중앙 집중형 목록 사용
+- 참가자 질문은 `meeting_posts`의 `kind=question`, `is_anonymous=true`로 기록
+- 질문 본문은 4–3,000자, 제목은 본문에서 자동 생성 (별도 제목 입력 불필요)
+- 신규 질문·답변은 Postgres Changes로 즉시 동기화. 네트워크 오류 시 12초 주기로 재조회
+- 행사 운영자가 `meeting_sessions.is_open=false`로 설정하면 신규 질문과 답변 입력은 서버 정책에서 차단
 
-- **현장 입장(기본):** 입장창의 `CEO 직접 답변` → 운영자가 CEO에게만 전달한 **1회용 CEO 인증코드**를 입력. 기기는 Supabase Auth 익명 계정에 귀속되고, 서버에서 최초 1인에게만 `ceo` 역할을 배정. CEO 댓글은 `CEO 답변` 배지로 표시.
-- **이메일 인증(선택):** 별도 이메일 인증 후 CEO 코드를 등록하는 방식도 구현됨. 단, Supabase 기본 메일 발송은 프로젝트 팀의 사전 인증된 메일 주소로 제한되므로, 일반 임직원 이메일로 사용하려면 공식 SMTP 구성이 필요.
-- **분실·기기 초기화:** 최초 등록한 브라우저의 데이터를 초기화하면 재인증을 위해 운영자가 기존 CEO 역할 연결을 해제하고 코드를 재발급해야 함. 코드 재발급은 SQL Editor 관리자 권한이 필요.
+## 운영 환경
 
-**특히 중요:** 현장형 CEO 인증은 코드 소지에 대한 인증이지 회사 계정 기반의 개인 신원 검증은 아닙니다. 반드시 행사 운영자가 CEO의 기기에 직접 전달하고 입력 상태를 확인하세요. 외부 공유나 캡처 게시를 금지합니다.
+- **Frontend:** GitHub Pages (`gh-pages`), React, Vite
+- **Database:** Supabase 서울 리전 `nianjjguagrddzbelcao`
+- **인증 방식:** 방문 즉시 Supabase anonymous auth → `join_public_workshop()` 자동 실행
+- **RLS:** 참가자와 CEO 역할은 서버 테이블에서 관리. 클라이언트는 직접 역할을 설정할 수 없음
+- **기존 데이터:** 같은 `meeting_posts`/`meeting_replies` 구조 사용, 기존 작성글 유지
+- **변경 SQL:** `supabase/migrations/20261026111000_frictionless_workshop_join.sql` 및 `20261026113500_workshop_title_and_short_question.sql`
+- **API 공개키:** `VITE_SUPABASE_PUBLISHABLE_KEY`만 브라우저에 탑재. 서비스 키와 행사 코드는 절대로 포함하지 않음
 
-## 운영자 자격증명
+## 운영 위험과 유의사항
 
-회의코드와 CEO 코드는 **저장소·웹 번들·GitHub Actions에 보관하지 않습니다.** 운영자 컴퓨터의 `~/.config/ceo-cl-board-deploy/venue-access.json`(파일 권한 600)에 별도 보관. 채팅·메일·공개 QR에 CEO 코드를 함께 적지 마세요. 공개 홈페이지의 QR 버튼은 URL만 안내하므로 현장 접근코드는 별도 배부합니다.
+**참가자 인증과 초대코드가 모두 없으므로 URL을 아는 사람은 누구나 질문할 수 있습니다.** 이 디자인은 현장의 개방적인 워크숍에 적합하지만 외부 유입·도배·악의적인 질문을 원천 차단하지는 못합니다. 기본 서버 측의 사용자별 질문 속도 제한(분당 최대 3건)과 Supabase 익명 인증 한도를 적용했지만, 대규모 행사 전에 부하 테스트 및 스팸 방지 장치를 별도로 검토해야 합니다.
 
-```
-project_ref: nianjjguagrddzbelcao
-meeting_slug: ceo-cl-2026
-```
+해당 Supabase 프로젝트는 개인 관리 조직 아래에 있습니다. 회사 정책에 따른 정보보호·개인정보 처리 적합성 확인 전에는 인사평가·고충·건강정보 등 민감한 정보를 입력하거나 외부 유출 위험이 있는 업무 내용을 게시하지 않도록 안내하세요.
 
-초대코드가 유효한 기간은 최초 설치일부터 30일. 종료/재개는 SQL Editor의 `meeting_sessions.is_open`으로 관리. 첫 실행 당시 실제 질문과 CEO 답변은 0건이며, 테스트 메시지는 삭제함.
-
-## 보안과 제약
-
-- 인증 후에도 `meeting_members` 및 각 테이블의 RLS가 서버에서 접근·역할 검증
-- 가명/익명 질문 작성자 UUID는 일반 게시글에서 제외, 운영진 접근이 가능한 감사 매핑에 분리
-- 질문/댓글 속도 제한, 한 사용자 1공감, 운영진만 게시글 숨김 권한
-- **관리 권고:** 실명이 드러나는 개인 민원, 건강·보상·인사평가 등 민감한 내용을 입력하지 않도록 운영 안내 필요. Supabase 프로젝트는 개인 관리 계정 내에 생성됨 — 기업 보안/데이터보호 담당자 승인 및 전환 검토 필요
-- Supabase Free 플랜은 장기간 활동이 없으면 자동 일시 중지될 수 있고, 백업·복구·부하보장 기능이 제한됨
-- 익명 인증 로그인은 같은 NAT IP에서 시간당 120회로 설정해 놓았음. 대규모 행사에서 연결 테스트 및 CAPTCHA/보호 장치 추가 검토 필요
-- 사전 승인된 기업 CI/캐릭터 사용 정책 확인
-
-## 로컬 빌드
+## 개발·검증
 
 ```bash
 npm ci
 npm run test
-npm run dev
 npm run stage:production
 ```
 
-프로덕션 환경변수는 `app/.env.production.local`에 있으며 **.gitignore 처리**됨. `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`만 프런트엔드에 사용. Secret 또는 service-role 키는 절대 번들링하지 않음.
+- 원본 React: `app/src/App.jsx`, 스타일: `app/src/styles.css`
+- 자동 참가 RPC: `public.join_public_workshop()` / CEO 역할 RPC: `public.claim_ceo_cl_on_site()`
+- 유틸리티 단위테스트: `tests/workshop-utils.test.mjs`
+- 모바일·데스크톱 브라우저 검증: `scripts/qa-online-workshop.mjs`
+- 검증 이미지 및 결과: `docs/qa/workshop-20261026/`
+- 데이터가 있는 경우와 없는 경우 모두 검증했고 임시 게시글·테스트 계정은 삭제함
 
-SQL 배포:
-
-```bash
-supabase link --project-ref nianjjguagrddzbelcao
-supabase db push --linked
-```
-
-자산/버전 관리:
-
-- `app/`: React 소스
-- `app/public/brand/`: 현대제철 CI/용강이 실제 사용 자산
-- `design-sources/`: 참고 이미지 (공개 JS에는 포함되지 않음)
-- `supabase/migrations/`: 신규 회의 스키마, RLS, 초대코드 입장 및 CEO 인증
-- `docs/qa/`: 로컬 브라우저 캡처
-- `legacy/board-original-20261023.html`: 과거 게시판 정적 HTML 사본 (필요 시 롤백)
-- `preview.html`: 새 React 화면의 별도 진입점 (실제 운영 화면과 동일)
-
-## 후속 운영 개선 제안
-
-1. 기업 공식 SSO·역할 매핑으로 온사이트 임시 CEO 인증을 대체
-2. 운영진 모더레이션 UI 및 신고/비식별화 흐름 구축
-3. 행사 종료 후 질문–CEO 답변–후속 실행과제 상태 추적/내보내기 기능 추가
-4. 동시 접속 규모에 맞춰 Supabase 유료 플랜, 백업 정책, CAPTCHA, 실시간 Broadcast 검증
-
-## 2026-10-23 모바일 세로 화면 개선
-
-최신 Board 화면은 **320~640px 모바일 세로**에서 단일 열로 표시됩니다. PC에서는 기존 넓은 타운홀 레이아웃을 유지합니다.
-
-- 상단 헤더 60px, 브랜드 히어로 163px로 축소하고 실시간 질문 목록을 앞쪽으로 배치
-- 390px 기준 실시간 질문이 시작하는 세로 위치를 기존 **923px → 556px**로 약 40% 단축
-- 질문 제목 18px, 질문 본문 15px, 질문 상세 16px, 답변 텍스트 15px, 하단 실행 버튼 17px
-- 검색/입장/작성 입력 텍스트 **16px**로 설정해 iOS 자동 화면 확대 방지
-- 통계는 한 줄, 카테고리는 4개 짧은 탭, 장황한 안내 영역은 모바일에서 생략
-- 하단에 큰 주요 실행 버튼 고정: 비참가자 **참여코드로 입장** / CL **질문·의견 남기기** / CEO **질문 목록 보기**
-- 공백/검색 결과 안내 문구를 현재 상태에 맞게 표시하고, 불필요한 중복 버튼 제거
-- 실제 DB, Supabase 역할·RLS, 기존 질문과 답변 데이터는 변경하지 않음
-
-모바일 검증: `scripts/qa-mobile-portrait.mjs` (320/360/375/390/430/480/640px), `scripts/qa-mobile-visual.mjs` (375/390/430px, 로컬 개발서버 예시 카드·CEO 답변 상세); 검증 이미지 `docs/qa/mobile-portrait/` 참조. 이 두 스크립트는 각각 정적 서버(포트 5192)와 개발서버(포트 5193)를 별도로 실행한 상태에서 사용할 수 있습니다. 재현은 브라우저 버전이나 서버 상태에 따라 약간 차이가 날 수 있습니다.
+`app/.env.production.local`은 개발자 로컬에만 보관하며 `.gitignore`로 제외합니다. 이전 화면과 코드도 Git 이력 및 `legacy/`에서 추적할 수 있습니다.
