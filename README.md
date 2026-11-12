@@ -1,7 +1,8 @@
 # 현대제철 CEO–CL 온라인 워크숍
 
-- **참가자 공유 주소:** https://is.gd/HSteelCLWorkshop (계정명 미노출 단축 링크)
-- **운영 원본:** https://01chungee10snu.github.io/Board/ (단축 링크로 접속해도 브라우저 주소 표시줄에 원본 주소가 노출됨)
+- **참가자 접속 주소 (새 저장소의 Pages 배포 후):** https://01chungee10.github.io/Board/
+- **관리 저장소:** https://github.com/01Chungee10/Board
+- **주소 공개 주의:** GitHub Pages 기본 주소에는 GitHub 사용자명이 노출됩니다. 계정명을 숨겨야 한다면 별도 도메인/프록시를 연결한 뒤 해당 주소로 안내하세요. 이전 단축 링크 `is.gd/HSteelCLWorkshop`는 옛 저장소 주소를 가리키므로 사용하지 않습니다.
 - **화면명:** 온라인 워크숍
 - **핵심 흐름:** 질문 작성 → 최신순 타임라인 → CEO 공식 답변
 
@@ -16,7 +17,7 @@
 ## CEO 직접 답변
 
 CEO는 일반 참가자 페이지가 아닌 **운영자용 접근경로**
-`https://01chungee10snu.github.io/Board/?host=1`을 열고,
+`https://01chungee10.github.io/Board/?host=1`을 열고,
 운영자가 CEO에게 직접 제공하는 1회용 전용 인증코드를 입력합니다.
 
 코드는 GitHub, 자바스크립트, 공개 QR 등에 포함되지 않습니다. 서버의

@@ -10,8 +10,9 @@ import {attachReactions,attachReplies,isValidQuestion,makeQuestionTitle} from '.
 const WORKSHOP_SLUG = import.meta.env.VITE_MEETING_SLUG || 'ceo-cl-2026';
 const COMPANY_LOGO = '/Board/brand/hyundai-steel-ci.png';
 const MASCOT = '/Board/brand/yonggang-mascot.png';
-// Public share link contains no GitHub account identifier. This is a redirect, not a privacy proxy.
-const PUBLIC_JOIN_URL = 'https://is.gd/HSteelCLWorkshop';
+// Generate a working QR link for the current deployment instead of a stale redirect.
+// A separate verified custom domain can later hide the GitHub Pages account in the URL.
+const PUBLIC_JOIN_URL = new URL(import.meta.env.BASE_URL, window.location.origin).href;
 let joinPromise = null;
 
 // An anonymous Supabase session is a technical RLS identity, not a visible sign-in.
@@ -89,7 +90,7 @@ function ShareDialog({onClose}) {
       <a className="share-url" href={PUBLIC_JOIN_URL} target="_blank" rel="noreferrer noopener">{PUBLIC_JOIN_URL}</a>
       <button type="button" className="share-copy" onClick={copyLink}><Link2 size={16}/>{copied?'주소 복사 완료':'접속 주소 복사'}</button>
       {copyError&&<p className="error-message">자동 복사가 안 되면 위 주소를 길게 눌러 복사해 주세요.</p>}
-      <small>공유 링크에는 GitHub 계정명이 없지만, 연결 후 브라우저의 최종 주소에는 표시될 수 있습니다.</small>
+      <small>이 주소는 현재 배포 사이트로 연결됩니다. GitHub Pages 주소에는 계정명이 표시될 수 있습니다.</small>
     </section>
   </div>;
 }

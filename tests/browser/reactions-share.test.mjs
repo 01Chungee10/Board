@@ -38,7 +38,7 @@ try{
     assert.match(await like.innerText(),/공감\s*3/);
     await page.getByRole('button',{name:'QR 접속'}).click();
     await page.locator('.share-qr svg').waitFor();
-    assert.equal(await page.locator('.share-url').getAttribute('href'),'https://is.gd/HSteelCLWorkshop');
+    assert.equal(await page.locator('.share-url').getAttribute('href'),url);
     const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);
     assert.equal(overflow,false,'horizontal overflow at '+width+'px');
     assert.deepEqual(errors,[],'client JS errors at '+width+'px');
