@@ -1,14 +1,17 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   ArrowUp, Check, CheckCircle2, ChevronDown, ChevronUp, CircleHelp,
-  Clock3, LockKeyhole, MessageCircle, RefreshCw, Send, ShieldCheck, X
+  Clock3, Heart, Link2, MessageCircle, QrCode, RefreshCw, Send, ShieldCheck, X
 } from 'lucide-react';
+import {QRCodeSVG} from 'qrcode.react';
 import {supabase} from './supabase.js';
-import {attachReplies,isValidQuestion,makeQuestionTitle} from './workshop-utils.js';
+import {attachReactions,attachReplies,isValidQuestion,makeQuestionTitle} from './workshop-utils.js';
 
 const WORKSHOP_SLUG = import.meta.env.VITE_MEETING_SLUG || 'ceo-cl-2026';
 const COMPANY_LOGO = '/Board/brand/hyundai-steel-ci.png';
 const MASCOT = '/Board/brand/yonggang-mascot.png';
+// Public share link contains no GitHub account identifier. This is a redirect, not a privacy proxy.
+const PUBLIC_JOIN_URL = 'https://is.gd/HSteelCLWorkshop';
 let joinPromise = null;
 
 // An anonymous Supabase session is a technical RLS identity, not a visible sign-in.
@@ -66,7 +69,32 @@ function HostDialog({onClose,onClaim,busy,error}) {
   </div>;
 }
 
-function QuestionRow({item,index,isHost,onAnswer}) {
+function ShareDialog({onClose}) {
+  const [copied,setCopied]=useState(false);
+  const [copyError,setCopyError]=useState(false);
+  useEffect(()=>{
+    const onKey=event=>{if(event.key==='Escape')onClose();};
+    window.addEventListener('keydown',onKey);
+    return()=>window.removeEventListener('keydown',onKey);
+  },[onClose]);
+  async function copyLink(){
+    try{await navigator.clipboard.writeText(PUBLIC_JOIN_URL);setCopied(true);setCopyError(false);}
+    catch{setCopyError(true);}
+  }
+  return <div className="overlay" onMouseDown={event=>{if(event.currentTarget===event.target)onClose();}}>
+    <section className="share-dialog" role="dialog" aria-modal="true" aria-label="워크숍 QR 접속">
+      <div className="share-dialog-header"><div><span className="overline">SCAN TO JOIN</span><h2>워크숍 바로 입장</h2></div><button type="button" className="icon-button" aria-label="QR 화면 닫기" onClick={onClose}><X size={20}/></button></div>
+      <p>휴대전화 카메라로 스캔하면 이름이나 참여코드 없이 접속할 수 있습니다.</p>
+      <div className="share-qr" aria-label="워크숍 접속 QR코드"><QRCodeSVG value={PUBLIC_JOIN_URL} size={224} level="H" marginSize={2} title="워크숍 접속 QR코드"/></div>
+      <a className="share-url" href={PUBLIC_JOIN_URL} target="_blank" rel="noreferrer noopener">{PUBLIC_JOIN_URL}</a>
+      <button type="button" className="share-copy" onClick={copyLink}><Link2 size={16}/>{copied?'주소 복사 완료':'접속 주소 복사'}</button>
+      {copyError&&<p className="error-message">자동 복사가 안 되면 위 주소를 길게 눌러 복사해 주세요.</p>}
+      <small>공유 링크에는 GitHub 계정명이 없지만, 연결 후 브라우저의 최종 주소에는 표시될 수 있습니다.</small>
+    </section>
+  </div>;
+}
+
+function QuestionRow({item,index,isHost,onAnswer,onLike,canLike,likeBusy}) {
   const [expanded,setExpanded]=useState(false);
   const [answer,setAnswer]=useState('');
   const [submitting,setSubmitting]=useState(false);
@@ -89,12 +117,18 @@ function QuestionRow({item,index,isHost,onAnswer}) {
     <div className="question-meta"><div className="question-person"><span className="timeline-dot"/><span>질문 {index}</span><span className="meta-divider">·</span><span>익명 참가자</span></div><time dateTime={item.created_at}>{timestamp(item.created_at)}</time></div>
     <p className="question-content">{question}</p>
     {latest&&!expanded&&<div className="answer-preview"><div className="answer-heading"><CheckCircle2 size={17}/> CEO 답변</div><p>{latest.content}</p></div>}
-    {(replies.length>0||isHost)&&<div className="question-actions">
-      {replies.length>0&&<button type="button" className="text-button" aria-expanded={expanded} onClick={()=>setExpanded(!expanded)}>
-        {expanded?'답변 접기':`답변 ${replies.length}건 보기`} {expanded?<ChevronUp size={17}/>:<ChevronDown size={17}/>}
-      </button>}
-      {isHost&&<button className="answer-button" type="button" onClick={()=>setExpanded(!expanded)}><MessageCircle size={16}/>{expanded?'닫기':'CEO 답변 작성'}</button>}
-    </div>}
+    <div className="question-actions">
+      <button type="button" className={`heart-button ${item.reacted?'reacted':''}`} aria-label={`질문 ${index} 공감 ${item.reacted?'취소':'하기'} (현재 ${item.reaction_count||0}명)`} aria-pressed={Boolean(item.reacted)} disabled={!canLike||likeBusy} onClick={()=>onLike(item)}>
+        <Heart size={18} fill={item.reacted?'currentColor':'none'} aria-hidden="true"/>
+        <span>공감</span><strong>{item.reaction_count||0}</strong>
+      </button>
+      {(replies.length>0||isHost)&&<div className="response-actions">
+        {replies.length>0&&<button type="button" className="text-button" aria-expanded={expanded} onClick={()=>setExpanded(!expanded)}>
+          {expanded?'답변 접기':`답변 ${replies.length}건 보기`} {expanded?<ChevronUp size={17}/>:<ChevronDown size={17}/>}
+        </button>}
+        {isHost&&<button className="answer-button" type="button" onClick={()=>setExpanded(!expanded)}><MessageCircle size={16}/>{expanded?'닫기':'CEO 답변 작성'}</button>}
+      </div>}
+    </div>
     {expanded&&<div className="answer-details">
       {replies.map(reply=><div className={`reply-line ${reply.author_role==='ceo'?'official':''}`} key={reply.id}><div className="reply-line-head"><span>{reply.author_role==='ceo'?'CEO 공식 답변':'참가자 의견'}</span><time>{timestamp(reply.created_at)}</time></div><p>{reply.content}</p></div>)}
       {isHost&&<form className="answer-compose" onSubmit={submitAnswer}><label htmlFor={`reply-${item.id}`}>CEO 답변 입력</label><textarea id={`reply-${item.id}`} value={answer} onChange={event=>setAnswer(event.target.value)} placeholder="현장의 질문에 답변을 남겨주세요." maxLength={2000} rows={3}/><button className="primary-button small" disabled={submitting||!answer.trim()} type="submit">{submitting?'등록 중…':'답변 등록'} <Send size={17}/></button>{error&&<p role="alert" className="error-message">{error}</p>}</form>}
@@ -118,6 +152,9 @@ export default function App(){
   const [hostOpen,setHostOpen]=useState(hostRequested);
   const [hostBusy,setHostBusy]=useState(false);
   const [hostError,setHostError]=useState('');
+  const [shareOpen,setShareOpen]=useState(false);
+  const [likeBusy,setLikeBusy]=useState({});
+  const likeLocks=useRef(new Set());
   const refreshId=useRef(0);
   const toastTimer=useRef();
   const loadLock=useRef(false);
@@ -148,15 +185,16 @@ export default function App(){
     const stamp=++refreshId.current;
     try{
       const results=await Promise.all([
-        supabase.from('meeting_posts').select('id,session_id,title,content,is_anonymous,author_name,created_at,status').eq('session_id',room.id).eq('status','open').eq('kind','question').order('created_at',{ascending:false}).limit(250),
+        supabase.from('meeting_posts').select('id,session_id,title,content,is_anonymous,author_name,created_at,status,reaction_count').eq('session_id',room.id).eq('status','open').eq('kind','question').order('created_at',{ascending:false}).limit(250),
         supabase.from('meeting_replies').select('id,post_id,session_id,content,created_at,author_role').eq('session_id',room.id).order('created_at',{ascending:true}).limit(2000),
+        supabase.from('meeting_reactions').select('post_id').eq('session_id',room.id).limit(5000),
         supabase.from('meeting_sessions').select('is_open').eq('id',room.id).single()
       ]);
       if(results.some(result=>result.error))throw results.find(result=>result.error).error;
 
       if(stamp===refreshId.current){
-        setQuestions(attachReplies(results[0].data||[],results[1].data||[]));
-        setRoom(old=>({...old,is_open:results[2].data.is_open}));
+        setQuestions(attachReactions(attachReplies(results[0].data||[],results[1].data||[]),results[2].data||[]));
+        setRoom(old=>({...old,is_open:results[3].data.is_open}));
         setLoadError('');
       }
     }catch(err){setLoadError('새 질문을 가져오지 못했습니다. 다시 연결해 주세요.');console.error('Workshop feed error:',err.message);}
@@ -171,10 +209,34 @@ export default function App(){
     const channel=supabase.channel(`workshop-${room.id}`)
       .on('postgres_changes',{event:'*',schema:'public',table:'meeting_posts',filter:`session_id=eq.${room.id}`},schedule)
       .on('postgres_changes',{event:'*',schema:'public',table:'meeting_replies',filter:`session_id=eq.${room.id}`},schedule)
+      .on('postgres_changes',{event:'*',schema:'public',table:'meeting_reactions',filter:`session_id=eq.${room.id}`},schedule)
       .subscribe(status=>setSyncStatus(status==='SUBSCRIBED'?'live':'polling'));
     const interval=setInterval(()=>refresh(true),12000);
     return()=>{clearTimeout(timer);clearInterval(interval);supabase.removeChannel(channel);};
   },[ready,room?.id,refresh]);
+
+  async function toggleLike(item){
+    if(!ready||likeLocks.current.has(item.id))return;
+    likeLocks.current.add(item.id);
+    setLikeBusy(old=>({...old,[item.id]:true}));
+    const nextLiked=!item.reacted;
+    try{
+      const result=nextLiked
+        ?await supabase.from('meeting_reactions').insert({post_id:item.id,session_id:room.id})
+        :await supabase.from('meeting_reactions').delete().eq('post_id',item.id);
+      if(result.error)throw result.error;
+      // Keep the tapped card responsive; the next snapshot synchronizes every viewer.
+      setQuestions(old=>old.map(q=>q.id===item.id?{...q,reacted:nextLiked,reaction_count:Math.max(0,(q.reaction_count||0)+(nextLiked?1:-1))}:q));
+      await refresh(true);
+    }catch(err){
+      console.error('Question reaction error:',err.message);
+      notify('공감을 변경하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+      await refresh(true);
+    }finally{
+      likeLocks.current.delete(item.id);
+      setLikeBusy(old=>{const copy={...old};delete copy[item.id];return copy;});
+    }
+  }
 
   async function submitQuestion(event){
     event.preventDefault();
@@ -214,7 +276,7 @@ export default function App(){
   }
 
   return <div className="workshop-page">
-    <header className="top-header"><div className="header-content"><img src={COMPANY_LOGO} alt="현대제철 HYUNDAI STEEL"/><div className="header-right"><span className="workshop-indicator"><span className={`status-dot ${syncStatus==='live'?'live':''}`}/>{ready?'실시간 질문':'연결 확인'}</span>{isHost&&<span className="ceo-mode"><ShieldCheck size={15}/> CEO</span>}</div></div></header>
+    <header className="top-header"><div className="header-content"><img src={COMPANY_LOGO} alt="현대제철 HYUNDAI STEEL"/><div className="header-right"><span className="workshop-indicator"><span className={`status-dot ${syncStatus==='live'?'live':''}`}/>{ready?'실시간 질문':'연결 확인'}</span><button type="button" className="header-qr" onClick={()=>setShareOpen(true)}><QrCode size={17}/> QR 접속</button>{isHost&&<span className="ceo-mode"><ShieldCheck size={15}/> CEO</span>}</div></div></header>
     <main className="main-column">
       <section className="workshop-heading"><div className="heading-copy"><span className="overline">CEO × CHANGE LEADER</span><h1>온라인 워크숍</h1><p>궁금한 점을 자유롭게 남겨주세요.<br/>등록된 질문은 모두에게 바로 공유됩니다.</p></div><img src={MASCOT} alt="" aria-hidden="true"/></section>
       {loadError&&<div className="connection-alert" role="alert"><CircleHelp size={18}/><span>{loadError}</span><button onClick={()=>{if(connected)refresh();else init();}}>재시도</button></div>}
@@ -223,10 +285,11 @@ export default function App(){
       {!initializing&&ready&&!room.is_open&&<div className="closed-banner"><Clock3 size={19}/> 질문 접수가 종료되었습니다. 등록된 대화는 계속 볼 수 있습니다.</div>}
       {!isHost&&<form className="question-composer" onSubmit={submitQuestion} aria-label="질문 작성"><label htmlFor="new-question">질문 남기기</label><textarea id="new-question" value={input} onChange={event=>{setInput(event.target.value);if(composeError)setComposeError('');}} placeholder="궁금한 점을 입력하세요" rows={3} maxLength={3000} disabled={!canAsk||submitting}/><div className="composer-footer"><span>{composeError?<span className="error-message" role="alert">{composeError}</span>:ready&&room.is_open?'이름 없이 등록됩니다.':initializing?'연결 중…':room&&!room.is_open?'질문 접수가 종료됐습니다.':'연결 후 작성할 수 있습니다.'}</span><button className="primary-button" type="submit" disabled={!canAsk||submitting||!isValidQuestion(input)}>{submitting?'등록 중…':'질문 등록'} <ArrowUp size={18}/></button></div></form>}
       <section className="questions-section" aria-labelledby="timeline-heading"><div className="timeline-header"><div><h2 id="timeline-heading">질문 타임라인</h2><span className="count">{questions.length}건</span></div><button type="button" className="refresh-button" aria-label="질문 새로고침" onClick={()=>refresh()} disabled={!ready||refreshing}><RefreshCw size={18} className={refreshing?'spin':''}/></button></div>
-        {questions.length===0?<div className="empty-feed"><MessageCircle size={27}/><strong>{initializing?'질문을 불러오는 중입니다.':ready?'아직 등록된 질문이 없습니다.':'워크숍 연결을 확인해 주세요.'}</strong><p>{ready&&room.is_open&&!isHost?'첫 질문을 남겨 대화를 시작해 주세요.':'질문이 등록되면 여기에 표시됩니다.'}</p></div>:<div className="question-feed">{questions.map((item,index)=><QuestionRow key={item.id} item={item} index={questions.length-index} isHost={isHost} onAnswer={submitAnswer}/>)}</div>}
+        {questions.length===0?<div className="empty-feed"><MessageCircle size={27}/><strong>{initializing?'질문을 불러오는 중입니다.':ready?'아직 등록된 질문이 없습니다.':'워크숍 연결을 확인해 주세요.'}</strong><p>{ready&&room.is_open&&!isHost?'첫 질문을 남겨 대화를 시작해 주세요.':'질문이 등록되면 여기에 표시됩니다.'}</p></div>:<div className="question-feed">{questions.map((item,index)=><QuestionRow key={item.id} item={item} index={questions.length-index} isHost={isHost} onAnswer={submitAnswer} onLike={toggleLike} canLike={ready} likeBusy={Boolean(likeBusy[item.id])}/>)}</div>}
       </section>
     </main>
     {toast&&<div role="status" className="toast"><CheckCircle2 size={18}/>{toast}</div>}
     {hostOpen&&<HostDialog onClose={()=>setHostOpen(false)} onClaim={claimHost} busy={hostBusy} error={hostError}/>}
+    {shareOpen&&<ShareDialog onClose={()=>setShareOpen(false)}/>}
   </div>;
 }
