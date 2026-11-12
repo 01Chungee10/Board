@@ -21,6 +21,8 @@ button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px soli
 .status-dot{width:8px;height:8px;border-radius:50%;background:#98a9ba}
 .status-dot.live{background:#24a66c;box-shadow:0 0 0 3px #cdefdf}
 .ceo-mode{display:inline-flex;gap:5px;align-items:center;font-weight:800;background:#edf4fb;border-radius:99px;color:var(--navy);padding:7px 10px;font-size:12px}
+.header-qr{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:7px 11px;background:#edf4fb;border:1px solid #cee0f2;border-radius:9px;color:var(--navy);font-size:13px;font-weight:850;white-space:nowrap}
+.header-qr:hover{background:#dceafa}
 .main-column{max-width:790px;padding:22px 20px 70px;margin:0 auto}
 .workshop-heading{display:flex;align-items:center;justify-content:space-between;min-height:122px;gap:18px;padding:0 2px 16px;border-bottom:1px solid var(--line)}
 .workshop-heading .heading-copy{min-width:0}
@@ -65,7 +67,14 @@ button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px soli
 .answer-preview{background:#f2f7fc;border-left:3px solid #367cb4;border-radius:0 9px 9px 0;padding:10px 13px;margin-top:14px}
 .answer-heading{display:flex;align-items:center;gap:6px;color:#175c99;font-size:13px;font-weight:900}
 .answer-preview p{font-size:15px;font-weight:500;color:#425c77;line-height:1.7;white-space:pre-wrap;word-break:break-word;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;margin:6px 0 0}
-.question-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:10px;flex-wrap:wrap}
+.question-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:15px;flex-wrap:wrap}
+.response-actions{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap}
+.heart-button{display:inline-flex;align-items:center;gap:7px;border:1px solid #cbd9e7;background:#fff;color:#557089;padding:8px 12px;min-height:42px;border-radius:99px;font-size:14px;font-weight:800;transition:border-color .16s,background .16s,color .16s}
+.heart-button strong{font-weight:900;font-variant-numeric:tabular-nums}
+.heart-button:hover:not(:disabled){border-color:#e5a9b1;background:#fff5f6;color:#ba4055}
+.heart-button.reacted{border-color:#f1b9c2;background:#fff0f3;color:#c72f52}
+.heart-button:disabled{opacity:.7}
+
 .text-button,.answer-button{border:0;background:transparent;color:#2a689d;display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:850;min-height:40px;padding:5px 0}
 .answer-button{background:#e9f2fb;padding:9px 12px;border-radius:8px}
 .answer-details{margin-top:13px;padding-top:13px;border-top:1px solid var(--line)}
@@ -92,10 +101,23 @@ button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px soli
 .host-dialog label{font-size:15px;font-weight:850;color:#284d74}
 .host-dialog input{border-radius:10px;border:1px solid #cad9e8;font-size:16px;padding:13px;min-height:48px}
 .host-dialog small{font-size:12px;color:#8796a6;line-height:1.6}
+.share-dialog{width:min(100%,420px);display:flex;flex-direction:column;align-items:center;gap:12px;background:#fff;padding:23px;border-radius:18px;box-shadow:0 20px 70px #001b4038}
+.share-dialog-header{display:flex;justify-content:space-between;align-items:center;width:100%;gap:10px}
+.share-dialog-header h2{color:var(--navy);margin:3px 0 0;font-size:22px}
+.share-dialog>p{font-size:14px;color:#647b90;line-height:1.6;text-align:center;margin:2px 0}
+.share-qr{display:grid;place-items:center;padding:11px;background:#fff;border:1px solid var(--line);border-radius:13px}
+.share-qr svg{max-width:100%;height:auto}
+.share-url{color:#135791;font-size:16px;font-weight:850;word-break:break-all;text-align:center}
+.share-copy{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--navy);color:#fff;border:0;border-radius:10px;padding:12px 16px;width:100%;min-height:46px;font-weight:850}
+.share-dialog>small{font-size:11px;color:#74879a;text-align:center;line-height:1.6}
+
 @media(max-width:600px){
   .header-content{min-height:57px;padding:8px 14px}
   .header-content img{width:118px}
+  .header-right{gap:6px}
   .workshop-indicator{font-size:12px}
+  .header-qr{min-height:38px;font-size:12px;padding:7px 8px;gap:4px}
+  .share-dialog{padding:18px}
   .main-column{padding:14px 12px 45px}
   .workshop-heading{min-height:92px;padding:1px 2px 11px;gap:12px}
   .overline{font-size:10px}
@@ -118,6 +140,7 @@ button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px soli
   .empty-feed{padding:28px 15px}
   .host-dialog{padding:20px;border-radius:14px}
 }
+@media(max-width:380px){.workshop-indicator{display:none}}
 @media(max-width:350px){
   .workshop-heading h1{font-size:25px}
   .workshop-heading img{height:69px}

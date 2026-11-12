@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {isValidQuestion,makeQuestionTitle,attachReplies} from '../app/src/workshop-utils.js';
+import {isValidQuestion,makeQuestionTitle,attachReplies,attachReactions} from '../app/src/workshop-utils.js';
 
 test('four characters or longer can be posted without identity fields',()=>{
   assert.equal(isValidQuestion('질문이요'),true);
@@ -40,4 +40,23 @@ test('unrelated replies are not attached to questions',()=>{
 });
 test('empty timeline is handled without placeholder fake posts',()=>{
   assert.deepEqual(attachReplies([],[]),[]);
+});
+
+
+test('all questions expose their aggregate reaction counts, including zero',()=>{
+  const posts=[{id:'a',reaction_count:7},{id:'b',reaction_count:0},{id:'c'}];
+  const result=attachReactions(posts,[]);
+  assert.deepEqual(result.map(p=>[p.reaction_count,p.reacted]),[[7,false],[0,false],[0,false]]);
+});
+test('a viewer sees only their own liked status, not the identities of other voters',()=>{
+  const posts=[{id:'a',reaction_count:3},{id:'b',reaction_count:9}];
+  const result=attachReactions(posts,[{post_id:'b'}]);
+  assert.deepEqual(result.map(p=>p.reacted),[false,true]);
+  assert.equal(Object.hasOwn(result[0],'user_id'),false);
+  assert.equal(result[1].reaction_count,9);
+});
+test('duplicate reaction records never inflate the server aggregate',()=>{
+  const result=attachReactions([{id:'a',reaction_count:2}],[{post_id:'a'},{post_id:'a'}]);
+  assert.equal(result[0].reaction_count,2);
+  assert.equal(result[0].reacted,true);
 });

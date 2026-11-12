@@ -17,3 +17,13 @@ export function attachReplies(posts,replies) {
   }
   return posts.map(post=>({...post,replies:grouped.get(post.id)||[]}));
 }
+
+/** Meeting RLS returns only this browser's reactions; totals are already aggregated on posts. */
+export function attachReactions(posts,ownReactions) {
+  const mine=new Set((ownReactions||[]).map(row=>row.post_id));
+  return posts.map(post=>({
+    ...post,
+    reaction_count:Number.isSafeInteger(post.reaction_count)&&post.reaction_count>=0?post.reaction_count:0,
+    reacted:mine.has(post.id)
+  }));
+}
