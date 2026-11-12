@@ -31,13 +31,13 @@
 - **백엔드:** 기존 Supabase `nianjjguagrddzbelcao` 프로젝트 그대로 사용. 운영 데이터 재입력, DB 재생성 및 SQL 재적용 금지.
 - **DB 연결:** `app/.env.production.local`에 이미 존재하는 publishable 키와 프로젝트 URL을 로컬 빌드에만 사용. 비밀 키는 버전 관리에 넣지 않음.
 - **QR:** `window.location.origin + import.meta.env.BASE_URL`에서 접속 주소 생성. 이전 단축링크로의 강제 이동 제거.
-- **관리·인증:** 새 Gmail 계정에 Supabase 조직 Owner 초대 후 수락(기존 Owner 계정은 새 Owner 접근권 확인 전 유지).
+- **관리·인증:** 현재 Supabase 조직은 Free 플랜으로 프로젝트별 권한 분리가 불가하다. 기존 조직에 새 Gmail을 Owner로 추가하면 다른 프로젝트까지 공개되므로, 우선 프로젝트는 유지하고 새 Gmail의 **별도 조직으로 Board 프로젝트만 이전**하는 방식을 권장한다.
 - **사용자 주소 익명성:** 독립적으로 관리하는 HTTPS 도메인을 Pages Custom domain에 연결해야 브라우저 주소 표시줄에서 GitHub 사용자명이 보이지 않음.
 
 ## C. 외부 계정의 사용자가 처리해야 하는 인증
 
 1. 새 GitHub 계정 `01Chungee10`으로 GitHub CLI 또는 ChatGPT GitHub 연동을 인증한다. `gh auth login -h github.com -p https --web`로 진행 가능하며 인증 코드는 사람 본인이 승인한다.
-2. Supabase 조직 `hqhycnmeierokqgvhxte`의 Owner 계정으로 `brienz311@gmail.com`을 **Owner** 역할로 초대하고, 받은 이메일에서 수락한다. 새 계정에서 프로젝트 접근 가능 여부를 반드시 확인한다.
+2. Supabase를 `brienz311@gmail.com`으로 로그인해 별도 조직을 준비한다. 기존 조직(`hqhycnmeierokqgvhxte`, Free 플랜)의 Owner 계정이 이 새 조직에 가입해야 Board 프로젝트의 **조직 간 이전**을 시작할 수 있다. 기존 조직에 Gmail을 Owner로 초대하는 것은 다른 프로젝트들에 대한 과도한 접근 권한을 부여하므로 별도 승인 없이 시행하지 않는다. 이전 전에는 대상 조직의 플랜·사용량·과금 가능성·일시 중단 가능성을 검토하고, 기존 Owner 접근을 유지한다.
 3. GitHub Pages 설정은 공개 저장소의 Pages → Deploy from a branch → `main` / `/(root)` 로 지정한다(아래 스크립트는 API로 이 단계까지 시도).
 4. Supabase Dashboard → Authentication → URL Configuration에서 `https://01chungee10.github.io/Board/` 및 `https://01chungee10.github.io/Board/preview.html`을 허용 Redirect URL에 **추가**한다. 이전 URL은 새 사이트 검증 후 제거 여부를 판단한다. 새 Pages 가동 후 Site URL도 신주소로 전환한다.
 5. GitHub 계정명 미노출이 필수라면 DNS를 관리할 수 있는 맞춤 도메인을 지정한다. 단순 단축 링크는 브라우저 최종 주소에서 GitHub 사용자명을 가리지 못한다.
@@ -72,5 +72,5 @@ bash scripts/publish-to-new-github.sh
 - [ ] `https://01chungee10.github.io/Board/` HTTP 200
 - [ ] 새 Pages에서 Supabase 질문 타임라인·하트 표시 정상
 - [ ] QR 스캔 시 동일한 새 사이트로 접속
-- [ ] Supabase 새 계정의 조직 Owner 수락, 원격 Auth URL 설정 반영
+- [ ] 새 Gmail 소유 조직으로 Board만 이전하거나 기존 조직 유지 결정, 원격 Auth URL 설정 반영
 - [ ] 사용자명 미노출이 필요하면 별도 도메인 연결 및 최종 URL 검증
