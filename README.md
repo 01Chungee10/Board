@@ -70,4 +70,13 @@ npm run stage:production
 - 검증 이미지 및 결과: `docs/qa/workshop-20261026/`
 - 데이터가 있는 경우와 없는 경우 모두 검증했고 임시 게시글·테스트 계정은 삭제함
 
+## 신규 GitHub 계정으로 게시
+
+- **GitHub 소유자:** `01Chungee10`
+- **로컬 배포 브랜치:** `main` / **배포 원격:** `publisher`
+- GitHub CLI에서 `01Chungee10` 계정 인증 후, 저장소 루트에서 `bash scripts/publish-to-new-github.sh`를 실행합니다.
+- 배포 스크립트는 대상 계정 일치 여부 및 커밋된 파일을 검증하고, 필요한 경우 공개 저장소를 만든 후 `main` 브랜치를 게시하며 GitHub Pages를 `main:/`로 구성합니다.
+- 이후 화면 소스 수정 시 `npm test && npm run stage:production`으로 빌드 결과를 갱신해 커밋한 뒤 동일 스크립트로 배포합니다.
+- **주의:** GitHub Pages의 기본 URL은 저장소 소유자명을 공개합니다. 소유자명 비노출이 필수라면 관리형 도메인을 별도로 연결해야 합니다.
+
 `app/.env.production.local`은 개발자 로컬에만 보관하며 `.gitignore`로 제외합니다. 이전 화면과 코드도 Git 이력 및 `legacy/`에서 추적할 수 있습니다.
