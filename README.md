@@ -72,8 +72,10 @@ npm run stage:production
 
 ## 신규 GitHub 계정으로 게시
 
+상세 이전 현황·위험·완료 점검표: [2026-11-13 이전 보고](docs/MIGRATION_2026-11-13.md).
+
 - **GitHub 소유자:** `01Chungee10`
-- **로컬 배포 브랜치:** `main` / **배포 원격:** `publisher`
+- **로컬 배포 브랜치:** `main` / **배포 원격:** `origin`
 - GitHub CLI에서 `01Chungee10` 계정 인증 후, 저장소 루트에서 `bash scripts/publish-to-new-github.sh`를 실행합니다.
 - 배포 스크립트는 대상 계정 일치 여부 및 커밋된 파일을 검증하고, 필요한 경우 공개 저장소를 만든 후 `main` 브랜치를 게시하며 GitHub Pages를 `main:/`로 구성합니다.
 - 이후 화면 소스 수정 시 `npm test && npm run stage:production`으로 빌드 결과를 갱신해 커밋한 뒤 동일 스크립트로 배포합니다.

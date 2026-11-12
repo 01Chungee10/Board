@@ -7,7 +7,7 @@ cd "$(dirname "$0")/.."
 owner="01Chungee10"
 repo="Board"
 target="$owner/$repo"
-remote="publisher"
+remote="origin"
 
 if ! command -v gh >/dev/null 2>&1; then
   echo "GitHub CLI (gh) is required." >&2
@@ -57,7 +57,9 @@ if [[ "$(printf "%s" "$remote_url" | tr "[:upper:]" "[:lower:]")" != "$(printf "
   exit 6
 fi
 
-git push --set-upstream "$remote" main:main
+# Do not use stale credentials for the suspended legacy GitHub account.
+# This push uses the identity selected and verified above by gh.
+git -c credential.helper= -c credential.https://github.com.helper="!gh auth git-credential" push --set-upstream "$remote" main:main
 
 # GitHub Pages serves the checked-in compiled root index.html from main:/.
 if gh api "repos/$target/pages" >/dev/null 2>&1; then
