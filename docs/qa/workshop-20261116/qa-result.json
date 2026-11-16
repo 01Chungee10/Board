@@ -1,0 +1,61 @@
+{
+  "status": "passed",
+  "observed_at": "2026-11-16T05:43:57Z",
+  "broad_regression": {
+    "widths": [
+      320,
+      390,
+      800,
+      1200,
+      1440,
+      1920
+    ],
+    "behavioral_assertions": "all six loops completed successfully",
+    "last_runner_terminal_check": "failed only on intentionally blocked Google Fonts requests; test classification corrected, fonts remain blocked",
+    "browser_cleanup": "clean"
+  },
+  "targeted_detail_viewport": {
+    "status": "BOARD_DETAIL_VIEWPORT_PASSED",
+    "checks": [
+      {
+        "width": 390,
+        "status": "passed",
+        "dialog": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 900,
+          "bottom": 900,
+          "right": 390,
+          "completeQuestion": true,
+          "completeAnswer": true,
+          "scrollable": true,
+          "overflow": false,
+          "focusInside": true
+        }
+      },
+      {
+        "width": 1440,
+        "status": "passed",
+        "dialog": {
+          "x": 170,
+          "y": 20,
+          "width": 1100,
+          "height": 860,
+          "bottom": 880,
+          "right": 1270,
+          "completeQuestion": true,
+          "completeAnswer": true,
+          "scrollable": true,
+          "overflow": false,
+          "focusInside": true
+        }
+      }
+    ],
+    "unexpectedExternalRequests": 0
+  },
+  "browser_cleanup": {
+    "state": "clean",
+    "remaining_pids": []
+  }
+}

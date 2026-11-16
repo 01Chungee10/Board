@@ -1,52 +1,53 @@
-import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
-import {mkdir} from 'node:fs/promises';
-import {chromium} from 'playwright';
+import {mkdir,readFile,writeFile} from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
+import path from 'node:path';
+import os from 'node:os';
 
+const root=fileURLToPath(new URL('../../',import.meta.url));
+const owner=process.env.AGENT_BROWSER_OWNER;
+if(!owner)throw new Error('Set AGENT_BROWSER_OWNER to the actual agent/thread identity before launching browser QA.');
+const harness=process.env.BROWSER_SESSION_GUARD||path.join(os.homedir(),'AI-Interop/runtime/browser-session-guard/browser_guard.py');
 const port=5197;
 const url='http://127.0.0.1:'+port+'/Board/';
-const dev=spawn(process.execPath,['./node_modules/vite/bin/vite.js','--config','tests/mock-vite.config.mjs','--port',String(port),'--strictPort'],{stdio:'ignore'});
-let browser;
+const evidence=path.join(root,'docs/qa/workshop-20261116');
+const dev=spawn(process.execPath,[path.join(root,'node_modules/vite/bin/vite.js'),'--config','tests/mock-vite.config.mjs','--port',String(port),'--strictPort'],{cwd:root,stdio:['ignore','pipe','pipe']});
+let serverOutput='';
+let guard;
+let guardOutput='';
+let guardError='';
+for(const stream of [dev.stdout,dev.stderr])stream.on('data',chunk=>{serverOutput=(serverOutput+chunk).slice(-5000);});
 async function ready(){
-  for(let i=0;i<70;i++){
-    try{const res=await fetch(url);if(res.ok)return;}catch{}
+  for(let attempt=0;attempt<70;attempt++){
+    if(dev.exitCode!==null)throw new Error('Local-only Vite server exited: '+serverOutput);
+    try{if((await fetch(url)).ok)return;}catch{}
     await new Promise(resolve=>setTimeout(resolve,200));
   }
-  throw new Error('Local-only test Vite server did not start');
+  throw new Error('Local-only Vite server did not start: '+serverOutput);
+}
+async function stopServer(){
+  if(dev.exitCode!==null)return;
+  dev.kill('SIGTERM');
+  await Promise.race([
+    new Promise(resolve=>dev.once('exit',resolve)),
+    new Promise((_,reject)=>setTimeout(()=>reject(new Error('Owned Vite process did not confirm shutdown')),5000).unref())
+  ]);
 }
 try{
   await ready();
-  await mkdir('docs/qa/workshop-20261113',{recursive:true});
-  browser=await chromium.launch({channel:'chrome',headless:true});
-  for(const width of [320,390,1440]){
-    const page=await browser.newPage({viewport:{width,height:850},deviceScaleFactor:1});
-    const errors=[];
-    page.on('pageerror',error=>errors.push(error.message));
-    const response=await page.goto(url,{waitUntil:'domcontentloaded'});
-    assert.equal(response.status(),200);
-    const card=page.locator('.question-item');
-    await card.waitFor({timeout:10000});
-    const like=card.locator('.heart-button');
-    await like.waitFor({state:'visible'});
-    assert.equal(await like.getAttribute('aria-pressed'),'false');
-    assert.match(await like.innerText(),/공감\s*3/);
-    await like.click();
-    await page.waitForFunction(()=>document.querySelector('.heart-button')?.getAttribute('aria-pressed')==='true');
-    assert.match(await like.innerText(),/공감\s*4/);
-    await like.click();
-    await page.waitForFunction(()=>document.querySelector('.heart-button')?.getAttribute('aria-pressed')==='false');
-    assert.match(await like.innerText(),/공감\s*3/);
-    await page.getByRole('button',{name:'QR 접속'}).click();
-    await page.locator('.share-qr svg').waitFor();
-    assert.equal(await page.locator('.share-url').getAttribute('href'),url);
-    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);
-    assert.equal(overflow,false,'horizontal overflow at '+width+'px');
-    assert.deepEqual(errors,[],'client JS errors at '+width+'px');
-    await page.screenshot({path:'docs/qa/workshop-20261113/reactions-qr-'+width+'.png',fullPage:true});
-    console.log('PASS '+width+'px: reaction toggle 3→4→3, QR link, no JS errors/overflow');
-    await page.close();
-  }
-} finally {
-  if(browser)await browser.close();
-  dev.kill('SIGTERM');
+  await mkdir(evidence,{recursive:true});
+  guard=spawn('/usr/bin/python3',['-B',path.join(root,'tests/browser/run_guarded_check.py'),'--harness',harness,'--owner',owner,'--code-file',path.join(root,'tests/browser/reading-features.guard.js')],{cwd:root,stdio:['ignore','pipe','pipe']});
+  guard.stdout.on('data',chunk=>{guardOutput+=chunk;process.stdout.write(chunk);});
+  guard.stderr.on('data',chunk=>{guardError+=chunk;process.stderr.write(chunk);});
+  const code=await new Promise((resolve,reject)=>{guard.once('error',reject);guard.once('exit',resolve);});
+  if(code!==0)throw new Error('Guarded browser QA failed with exit '+code);
+  if(/^### Error/m.test(guardOutput)||! /"status"\s*:\s*"BOARD_UI_QA_PASSED"/.test(guardOutput))throw new Error('Browser command did not return a successful result');
+  const receiptPath=guardError.match(/Browser cleanup verified: ([^\r\n]+)/)?.[1];
+  if(!receiptPath)throw new Error('Missing browser cleanup receipt');
+  const receipt=JSON.parse(await readFile(receiptPath,'utf8'));
+  if(receipt.state!=='clean'||receipt.remaining_pids.length!==0)throw new Error('Browser cleanup not verified');
+  await writeFile(path.join(evidence,'qa-result.json'),JSON.stringify({status:'passed',checked_at:new Date().toISOString(),browser_cleanup:{state:receipt.state,remaining_pids:receipt.remaining_pids},widths:[320,390,800,1200,1440,1920],scope:['responsive-columns','newest-and-popular-order','tie-order','native-dialog-full-text','keyboard-focus','reaction-sync','qr-regression']},null,2)+'\n');
+  console.log('PASS Board UI QA; owned browser cleanup verified.');
+}finally{
+  await stopServer();
 }

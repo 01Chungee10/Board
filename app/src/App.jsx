@@ -1,11 +1,11 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
-  ArrowUp, Check, CheckCircle2, ChevronDown, ChevronUp, CircleHelp,
+  ArrowUp, Check, CheckCircle2, CircleHelp, Maximize2,
   Clock3, Heart, Link2, MessageCircle, QrCode, RefreshCw, Send, ShieldCheck, X
 } from 'lucide-react';
 import {QRCodeSVG} from 'qrcode.react';
 import {supabase} from './supabase.js';
-import {attachReactions,attachReplies,isValidQuestion,makeQuestionTitle} from './workshop-utils.js';
+import {attachReactions,attachReplies,isValidQuestion,makeQuestionTitle,sortQuestions} from './workshop-utils.js';
 
 const WORKSHOP_SLUG = import.meta.env.VITE_MEETING_SLUG || 'ceo-cl-2026';
 const COMPANY_LOGO = '/Board/brand/hyundai-steel-ci.png';
@@ -95,46 +95,85 @@ function ShareDialog({onClose}) {
   </div>;
 }
 
-function QuestionRow({item,index,isHost,onAnswer,onLike,canLike,likeBusy}) {
-  const [expanded,setExpanded]=useState(false);
+function LikeButton({item,index,onLike,canLike,likeBusy}) {
+  return <button type="button" className={`heart-button ${item.reacted?'reacted':''}`} aria-label={`질문 ${index} 공감 ${item.reacted?'취소':'하기'} (현재 ${item.reaction_count||0}명)`} aria-pressed={Boolean(item.reacted)} disabled={!canLike||likeBusy} onClick={()=>onLike(item)}>
+    <Heart size={18} fill={item.reacted?'currentColor':'none'} aria-hidden="true"/>
+    <span>공감</span><strong>{item.reaction_count||0}</strong>
+  </button>;
+}
+
+function QuestionRow({item,index,isHost,onOpen,onLike,canLike,likeBusy}) {
+  const replies=item.replies||[];
+  const latest=replies.filter(reply=>reply.author_role==='ceo').at(-1);
+  const question=(item.content||item.title||'').trim();
+  return <article className="question-item" data-question-id={item.id}>
+    <button type="button" className="question-open" aria-haspopup="dialog" aria-label={`질문 ${index} 크게 보기: ${question.slice(0,70)}`} onClick={event=>onOpen(item,index,event.currentTarget)}>
+      <span className="question-meta"><span className="question-person"><span className="timeline-dot"/><span>질문 {index}</span><span className="meta-divider">·</span><span>익명 참가자</span></span><time dateTime={item.created_at}>{timestamp(item.created_at)}</time></span>
+      <span className="question-content">{question}</span>
+      {latest&&<span className="answer-preview"><span className="answer-heading"><CheckCircle2 size={17} aria-hidden="true"/> CEO 답변</span><span className="answer-text">{latest.content}</span></span>}
+    </button>
+    <div className="question-actions">
+      <LikeButton item={item} index={index} onLike={onLike} canLike={canLike} likeBusy={likeBusy}/>
+      <div className="response-actions">
+        <button type="button" className="detail-button" aria-haspopup="dialog" aria-label={`질문 ${index} 크게 보기${replies.length?`, 답변 ${replies.length}건`:''}`} onClick={event=>onOpen(item,index,event.currentTarget)}><Maximize2 size={16} aria-hidden="true"/> 크게 보기{replies.length>0&&<span>· 답변 {replies.length}</span>}</button>
+        {isHost&&<button className="answer-button" type="button" aria-haspopup="dialog" onClick={event=>onOpen(item,index,event.currentTarget,true)}><MessageCircle size={16} aria-hidden="true"/> CEO 답변 작성</button>}
+      </div>
+    </div>
+  </article>;
+}
+
+function QuestionDialog({item,index,isHost,focusAnswer,onClose,onAnswer,onLike,canLike,canAnswer,likeBusy}) {
+  const dialogRef=useRef(null);
+  const headingRef=useRef(null);
+  const answerRef=useRef(null);
+  const backdropPress=useRef(false);
   const [answer,setAnswer]=useState('');
   const [submitting,setSubmitting]=useState(false);
   const [error,setError]=useState('');
   const replies=item.replies||[];
-  const ceoReplies=replies.filter(reply=>reply.author_role==='ceo');
-  const latest=ceoReplies.length?ceoReplies[ceoReplies.length-1]:null;
   const question=(item.content||item.title||'').trim();
+
+  useEffect(()=>{
+    const dialog=dialogRef.current;
+    const previousOverflow=document.body.style.overflow;
+    dialog.showModal();
+    document.body.style.overflow='hidden';
+    if(focusAnswer&&answerRef.current)answerRef.current.focus();
+    else headingRef.current?.focus({preventScroll:true});
+    return()=>{
+      document.body.style.overflow=previousOverflow;
+      if(dialog.open)dialog.close();
+    };
+  },[focusAnswer]);
 
   async function submitAnswer(event){
     event.preventDefault();
-    if(answer.trim().length<2){setError('답변을 2자 이상 작성해 주세요.');return;}
+    if(!canAnswer||submitting)return;
+    if(answer.trim().length<2){setError('답변을 2자 이상 작성해 주세요.');answerRef.current?.focus();return;}
     setSubmitting(true);setError('');
     const ok=await onAnswer(item.id,answer.trim());
-    if(ok){setAnswer('');setExpanded(true);}else{setError('등록에 실패했습니다. 연결 상태를 확인해 주세요.');}
+    if(ok)setAnswer('');else setError('등록에 실패했습니다. 연결 상태를 확인해 주세요.');
     setSubmitting(false);
   }
 
-  return <article className="question-item">
-    <div className="question-meta"><div className="question-person"><span className="timeline-dot"/><span>질문 {index}</span><span className="meta-divider">·</span><span>익명 참가자</span></div><time dateTime={item.created_at}>{timestamp(item.created_at)}</time></div>
-    <p className="question-content">{question}</p>
-    {latest&&!expanded&&<div className="answer-preview"><div className="answer-heading"><CheckCircle2 size={17}/> CEO 답변</div><p>{latest.content}</p></div>}
-    <div className="question-actions">
-      <button type="button" className={`heart-button ${item.reacted?'reacted':''}`} aria-label={`질문 ${index} 공감 ${item.reacted?'취소':'하기'} (현재 ${item.reaction_count||0}명)`} aria-pressed={Boolean(item.reacted)} disabled={!canLike||likeBusy} onClick={()=>onLike(item)}>
-        <Heart size={18} fill={item.reacted?'currentColor':'none'} aria-hidden="true"/>
-        <span>공감</span><strong>{item.reaction_count||0}</strong>
-      </button>
-      {(replies.length>0||isHost)&&<div className="response-actions">
-        {replies.length>0&&<button type="button" className="text-button" aria-expanded={expanded} onClick={()=>setExpanded(!expanded)}>
-          {expanded?'답변 접기':`답변 ${replies.length}건 보기`} {expanded?<ChevronUp size={17}/>:<ChevronDown size={17}/>}
-        </button>}
-        {isHost&&<button className="answer-button" type="button" onClick={()=>setExpanded(!expanded)}><MessageCircle size={16}/>{expanded?'닫기':'CEO 답변 작성'}</button>}
-      </div>}
+  function outside(event){
+    const box=event.currentTarget.getBoundingClientRect();
+    return event.target===event.currentTarget&&(event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom);
+  }
+
+  return <dialog ref={dialogRef} className="question-dialog" aria-labelledby="question-dialog-title" onCancel={event=>{event.preventDefault();onClose();}} onPointerDown={event=>{backdropPress.current=outside(event);}} onClick={event=>{if(backdropPress.current&&outside(event))onClose();backdropPress.current=false;}}>
+    <div className="question-dialog-header"><div><span className="overline">함께 나누는 질문</span><h2 id="question-dialog-title" ref={headingRef} tabIndex={-1}>질문 {index} 자세히 보기</h2></div><button type="button" className="icon-button" onClick={onClose} aria-label="질문 상세 닫기"><X size={23} aria-hidden="true"/></button></div>
+    <div className="question-dialog-scroll">
+      <div className="detail-meta"><span>익명 참가자</span><time dateTime={item.created_at}>{timestamp(item.created_at)}</time></div>
+      <p className="detail-question">{question}</p>
+      <div className="question-dialog-actions"><LikeButton item={item} index={index} onLike={onLike} canLike={canLike} likeBusy={likeBusy}/><span>답변 {replies.length}건</span></div>
+      <section className="detail-replies" aria-label="질문에 대한 답변">
+        <h3>답변 {replies.length}건</h3>
+        {replies.length===0?<p className="detail-empty">아직 등록된 답변이 없습니다.</p>:replies.map(reply=><div className={`reply-line ${reply.author_role==='ceo'?'official':''}`} key={reply.id}><div className="reply-line-head"><span>{reply.author_role==='ceo'?'CEO 공식 답변':'참가자 의견'}</span><time dateTime={reply.created_at}>{timestamp(reply.created_at)}</time></div><p>{reply.content}</p></div>)}
+        {isHost&&<form className="answer-compose" onSubmit={submitAnswer}><label htmlFor="detail-answer">CEO 답변 입력</label><textarea ref={answerRef} id="detail-answer" value={answer} onChange={event=>{setAnswer(event.target.value);if(error)setError('');}} placeholder="현장의 질문에 답변을 남겨주세요." maxLength={2000} rows={4} disabled={!canAnswer||submitting} aria-invalid={Boolean(error)} aria-describedby={error?'detail-answer-error':undefined}/><button className="primary-button small" disabled={!canAnswer||submitting} type="submit">{submitting?'등록 중…':'답변 등록'} <Send size={17} aria-hidden="true"/></button>{!canAnswer&&<p className="detail-empty">질문 접수가 종료되어 답변을 작성할 수 없습니다.</p>}{error&&<p id="detail-answer-error" role="alert" className="error-message">{error}</p>}</form>}
+      </section>
     </div>
-    {expanded&&<div className="answer-details">
-      {replies.map(reply=><div className={`reply-line ${reply.author_role==='ceo'?'official':''}`} key={reply.id}><div className="reply-line-head"><span>{reply.author_role==='ceo'?'CEO 공식 답변':'참가자 의견'}</span><time>{timestamp(reply.created_at)}</time></div><p>{reply.content}</p></div>)}
-      {isHost&&<form className="answer-compose" onSubmit={submitAnswer}><label htmlFor={`reply-${item.id}`}>CEO 답변 입력</label><textarea id={`reply-${item.id}`} value={answer} onChange={event=>setAnswer(event.target.value)} placeholder="현장의 질문에 답변을 남겨주세요." maxLength={2000} rows={3}/><button className="primary-button small" disabled={submitting||!answer.trim()} type="submit">{submitting?'등록 중…':'답변 등록'} <Send size={17}/></button>{error&&<p role="alert" className="error-message">{error}</p>}</form>}
-    </div>}
-  </article>;
+  </dialog>;
 }
 
 export default function App(){
@@ -155,13 +194,33 @@ export default function App(){
   const [hostError,setHostError]=useState('');
   const [shareOpen,setShareOpen]=useState(false);
   const [likeBusy,setLikeBusy]=useState({});
+  const [sortOrder,setSortOrder]=useState('newest');
+  const [selection,setSelection]=useState(null);
+  const sortOrderRef=useRef('newest');
+  const detailTrigger=useRef(null);
   const likeLocks=useRef(new Set());
   const refreshId=useRef(0);
   const toastTimer=useRef();
-  const loadLock=useRef(false);
   const ready=Boolean(connected&&room);
   const isHost=role==='ceo';
   const canAsk=Boolean(ready&&room.is_open&&!isHost);
+  const sortedQuestions=useMemo(()=>sortQuestions(questions,sortOrder),[questions,sortOrder]);
+  const questionNumbers=useMemo(()=>new Map(sortQuestions(questions).map((item,index)=>[item.id,questions.length-index])),[questions]);
+  const selectedQuestion=selection&&(questions.find(item=>item.id===selection.item.id)||selection.item);
+
+  function openQuestion(item,index,trigger,focusAnswer=false){
+    detailTrigger.current=trigger;
+    setSelection({item,index,focusAnswer});
+  }
+
+  const closeQuestion=useCallback(()=>{
+    const trigger=detailTrigger.current;
+    setSelection(null);
+    requestAnimationFrame(()=>{
+      if(trigger?.isConnected)trigger.focus({preventScroll:true});
+      else document.getElementById('timeline-heading')?.focus({preventScroll:true});
+    });
+  },[]);
 
   function notify(message){setToast(message);clearTimeout(toastTimer.current);toastTimer.current=setTimeout(()=>setToast(''),3000);}
 
@@ -180,13 +239,15 @@ export default function App(){
   useEffect(()=>{init();return()=>clearTimeout(toastTimer.current);},[init]);
 
   const refresh = useCallback(async (quiet=false) => {
-    if(!room?.id||!supabase||loadLock.current)return;
-    loadLock.current=true;
+    if(!room?.id||!supabase)return;
     if(!quiet)setRefreshing(true);
     const stamp=++refreshId.current;
     try{
+      // Order before limiting, so older popular questions are not excluded.
+      let posts=supabase.from('meeting_posts').select('id,session_id,title,content,is_anonymous,author_name,created_at,status,reaction_count').eq('session_id',room.id).eq('status','open').eq('kind','question');
+      if(sortOrderRef.current==='popular')posts=posts.order('reaction_count',{ascending:false,nullsFirst:false});
       const results=await Promise.all([
-        supabase.from('meeting_posts').select('id,session_id,title,content,is_anonymous,author_name,created_at,status,reaction_count').eq('session_id',room.id).eq('status','open').eq('kind','question').order('created_at',{ascending:false}).limit(250),
+        posts.order('created_at',{ascending:false}).order('id',{ascending:true}).limit(250),
         supabase.from('meeting_replies').select('id,post_id,session_id,content,created_at,author_role').eq('session_id',room.id).order('created_at',{ascending:true}).limit(2000),
         supabase.from('meeting_reactions').select('post_id').eq('session_id',room.id).limit(5000),
         supabase.from('meeting_sessions').select('is_open').eq('id',room.id).single()
@@ -194,13 +255,26 @@ export default function App(){
       if(results.some(result=>result.error))throw results.find(result=>result.error).error;
 
       if(stamp===refreshId.current){
-        setQuestions(attachReactions(attachReplies(results[0].data||[],results[1].data||[]),results[2].data||[]));
+        const next=attachReactions(attachReplies(results[0].data||[],results[1].data||[]),results[2].data||[]);
+        setQuestions(next);
+        setSelection(old=>{
+          if(!old)return old;
+          const item=next.find(question=>question.id===old.item.id);
+          return item?{...old,item}:old;
+        });
         setRoom(old=>({...old,is_open:results[3].data.is_open}));
         setLoadError('');
       }
-    }catch(err){setLoadError('새 질문을 가져오지 못했습니다. 다시 연결해 주세요.');console.error('Workshop feed error:',err.message);}
-    finally{loadLock.current=false;if(!quiet)setRefreshing(false);}
+    }catch(err){if(stamp===refreshId.current)setLoadError('새 질문을 가져오지 못했습니다. 다시 연결해 주세요.');console.error('Workshop feed error:',err.message);}
+    finally{if(stamp===refreshId.current)setRefreshing(false);}
   },[room?.id]);
+
+  function changeSort(order){
+    if(order===sortOrderRef.current)return;
+    sortOrderRef.current=order;
+    setSortOrder(order);
+    refresh();
+  }
 
   useEffect(()=>{
     if(!ready)return;
@@ -228,6 +302,7 @@ export default function App(){
       if(result.error)throw result.error;
       // Keep the tapped card responsive; the next snapshot synchronizes every viewer.
       setQuestions(old=>old.map(q=>q.id===item.id?{...q,reacted:nextLiked,reaction_count:Math.max(0,(q.reaction_count||0)+(nextLiked?1:-1))}:q));
+      setSelection(old=>old?.item.id===item.id?{...old,item:{...old.item,reacted:nextLiked,reaction_count:Math.max(0,(old.item.reaction_count||0)+(nextLiked?1:-1))}}:old);
       await refresh(true);
     }catch(err){
       console.error('Question reaction error:',err.message);
@@ -285,12 +360,25 @@ export default function App(){
       {!initializing&&isHost&&<div className="host-banner"><ShieldCheck size={18}/> CEO 공식 답변 모드입니다. 질문을 선택해 답변할 수 있습니다.</div>}
       {!initializing&&ready&&!room.is_open&&<div className="closed-banner"><Clock3 size={19}/> 질문 접수가 종료되었습니다. 등록된 대화는 계속 볼 수 있습니다.</div>}
       {!isHost&&<form className="question-composer" onSubmit={submitQuestion} aria-label="질문 작성"><label htmlFor="new-question">질문 남기기</label><textarea id="new-question" value={input} onChange={event=>{setInput(event.target.value);if(composeError)setComposeError('');}} placeholder="궁금한 점을 입력하세요" rows={3} maxLength={3000} disabled={!canAsk||submitting}/><div className="composer-footer"><span>{composeError?<span className="error-message" role="alert">{composeError}</span>:ready&&room.is_open?'이름 없이 등록됩니다.':initializing?'연결 중…':room&&!room.is_open?'질문 접수가 종료됐습니다.':'연결 후 작성할 수 있습니다.'}</span><button className="primary-button" type="submit" disabled={!canAsk||submitting||!isValidQuestion(input)}>{submitting?'등록 중…':'질문 등록'} <ArrowUp size={18}/></button></div></form>}
-      <section className="questions-section" aria-labelledby="timeline-heading"><div className="timeline-header"><div><h2 id="timeline-heading">질문 타임라인</h2><span className="count">{questions.length}건</span></div><button type="button" className="refresh-button" aria-label="질문 새로고침" onClick={()=>refresh()} disabled={!ready||refreshing}><RefreshCw size={18} className={refreshing?'spin':''}/></button></div>
-        {questions.length===0?<div className="empty-feed"><MessageCircle size={27}/><strong>{initializing?'질문을 불러오는 중입니다.':ready?'아직 등록된 질문이 없습니다.':'워크숍 연결을 확인해 주세요.'}</strong><p>{ready&&room.is_open&&!isHost?'첫 질문을 남겨 대화를 시작해 주세요.':'질문이 등록되면 여기에 표시됩니다.'}</p></div>:<div className="question-feed">{questions.map((item,index)=><QuestionRow key={item.id} item={item} index={questions.length-index} isHost={isHost} onAnswer={submitAnswer} onLike={toggleLike} canLike={ready} likeBusy={Boolean(likeBusy[item.id])}/>)}</div>}
+      <section className="questions-section" aria-labelledby="timeline-heading">
+        <div className="timeline-header">
+          <div className="timeline-title"><h2 id="timeline-heading" tabIndex={-1}>질문 타임라인</h2><span className="count">{questions.length}건</span></div>
+          <div className="timeline-tools">
+            <div className="sort-controls" role="group" aria-label="질문 정렬">
+              <button type="button" className={`sort-button ${sortOrder==='newest'?'active':''}`} aria-pressed={sortOrder==='newest'} onClick={()=>changeSort('newest')}><Clock3 size={16} aria-hidden="true"/> 최신순</button>
+              <button type="button" className={`sort-button ${sortOrder==='popular'?'active':''}`} aria-pressed={sortOrder==='popular'} onClick={()=>changeSort('popular')}><Heart size={16} aria-hidden="true"/> 공감순</button>
+            </div>
+            <button type="button" className="refresh-button" aria-label="질문 새로고침" onClick={()=>refresh()} disabled={!ready||refreshing}><RefreshCw size={18} className={refreshing?'spin':''}/></button>
+          </div>
+        </div>
+        <p className="feed-hint">질문 카드를 누르면 큰 글씨로 질문과 답변을 볼 수 있습니다.</p>
+        <span className="sr-only" role="status">{sortOrder==='popular'?'공감 많은 순서':'최신 등록 순서'}로 질문 {questions.length}건을 표시합니다.</span>
+        {questions.length===0?<div className="empty-feed"><MessageCircle size={27}/><strong>{initializing?'질문을 불러오는 중입니다.':ready?'아직 등록된 질문이 없습니다.':'워크숍 연결을 확인해 주세요.'}</strong><p>{ready&&room.is_open&&!isHost?'첫 질문을 남겨 대화를 시작해 주세요.':'질문이 등록되면 여기에 표시됩니다.'}</p></div>:<div className="question-feed">{sortedQuestions.map(item=><QuestionRow key={item.id} item={item} index={questionNumbers.get(item.id)} isHost={isHost} onOpen={openQuestion} onLike={toggleLike} canLike={ready} likeBusy={Boolean(likeBusy[item.id])}/>)}</div>}
       </section>
     </main>
     {toast&&<div role="status" className="toast"><CheckCircle2 size={18}/>{toast}</div>}
     {hostOpen&&<HostDialog onClose={()=>setHostOpen(false)} onClaim={claimHost} busy={hostBusy} error={hostError}/>}
     {shareOpen&&<ShareDialog onClose={()=>setShareOpen(false)}/>}
+    {selectedQuestion&&<QuestionDialog key={selectedQuestion.id} item={selectedQuestion} index={selection.index} isHost={isHost} focusAnswer={selection.focusAnswer} onClose={closeQuestion} onAnswer={submitAnswer} onLike={toggleLike} canLike={ready} canAnswer={Boolean(ready&&room.is_open&&isHost)} likeBusy={Boolean(likeBusy[selectedQuestion.id])}/>}
   </div>;
 }

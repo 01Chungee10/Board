@@ -27,3 +27,15 @@ export function attachReactions(posts,ownReactions) {
     reacted:mine.has(post.id)
   }));
 }
+
+/** Mirror the server order without mutating the realtime snapshot. */
+export function sortQuestions(posts,order='newest') {
+  const created=post=>Date.parse(post.created_at)||0;
+  return [...posts].sort((a,b)=>{
+    if(order==='popular'){
+      const byReactions=(b.reaction_count||0)-(a.reaction_count||0);
+      if(byReactions)return byReactions;
+    }
+    return created(b)-created(a)||String(a.id).localeCompare(String(b.id));
+  });
+}

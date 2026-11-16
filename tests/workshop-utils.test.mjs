@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {isValidQuestion,makeQuestionTitle,attachReplies,attachReactions} from '../app/src/workshop-utils.js';
+import {isValidQuestion,makeQuestionTitle,attachReplies,attachReactions,sortQuestions} from '../app/src/workshop-utils.js';
 
 test('four characters or longer can be posted without identity fields',()=>{
   assert.equal(isValidQuestion('질문이요'),true);
@@ -59,4 +59,22 @@ test('duplicate reaction records never inflate the server aggregate',()=>{
   const result=attachReactions([{id:'a',reaction_count:2}],[{post_id:'a'},{post_id:'a'}]);
   assert.equal(result[0].reaction_count,2);
   assert.equal(result[0].reacted,true);
+});
+
+test('popular order uses aggregate counts and newest timestamp to break ties',()=>{
+  const posts=[
+    {id:'newest',created_at:'2026-11-16T03:00:00Z',reaction_count:0},
+    {id:'popular-old',created_at:'2026-11-15T01:00:00Z',reaction_count:9},
+    {id:'popular-new',created_at:'2026-11-16T01:00:00Z',reaction_count:9}
+  ];
+  assert.deepEqual(sortQuestions(posts,'popular').map(p=>p.id),['popular-new','popular-old','newest']);
+  assert.deepEqual(sortQuestions(posts,'newest').map(p=>p.id),['newest','popular-new','popular-old']);
+  assert.deepEqual(posts.map(p=>p.id),['newest','popular-old','popular-new']);
+});
+
+test('identical count and timestamp have a stable order after realtime snapshots',()=>{
+  const posts=[{id:'b',created_at:'2026-11-16T01:00:00Z',reaction_count:2},{id:'a',created_at:'2026-11-16T01:00:00Z',reaction_count:2}];
+  assert.deepEqual(sortQuestions(posts,'popular').map(p=>p.id),['a','b']);
+  assert.deepEqual(sortQuestions([...posts].reverse(),'popular').map(p=>p.id),['a','b']);
+  assert.deepEqual(sortQuestions([]),[]);
 });

@@ -7,3 +7,5 @@ dist/
 
 # Local-only identities created by E2E quality checks
 app/.qa-user-ids.local
+.playwright-cli/
+docs/qa/**/browser-diagnostics/
