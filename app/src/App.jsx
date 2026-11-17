@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import {QRCodeSVG} from 'qrcode.react';
 import {supabase} from './supabase.js';
+import {DISCUSSION_TOPICS} from './discussion-topics.js';
 import {attachReactions,attachReplies,isValidQuestion,makeQuestionTitle,sortQuestions} from './workshop-utils.js';
 
 const WORKSHOP_SLUG = import.meta.env.VITE_MEETING_SLUG || 'ceo-cl-2026';
@@ -181,6 +182,7 @@ export default function App(){
   const [room,setRoom]=useState(null);
   const [connected,setConnected]=useState(false);
   const [questions,setQuestions]=useState([]);
+  const discussionTopics=DISCUSSION_TOPICS;
   const [initializing,setInitializing]=useState(true);
   const [loadError,setLoadError]=useState('');
   const [syncStatus,setSyncStatus]=useState('polling');
@@ -360,6 +362,11 @@ export default function App(){
       {!initializing&&isHost&&<div className="host-banner"><ShieldCheck size={18}/> CEO 공식 답변 모드입니다. 질문을 선택해 답변할 수 있습니다.</div>}
       {!initializing&&ready&&!room.is_open&&<div className="closed-banner"><Clock3 size={19}/> 질문 접수가 종료되었습니다. 등록된 대화는 계속 볼 수 있습니다.</div>}
       {!isHost&&<form className="question-composer" onSubmit={submitQuestion} aria-label="질문 작성"><label htmlFor="new-question">질문 남기기</label><textarea id="new-question" value={input} onChange={event=>{setInput(event.target.value);if(composeError)setComposeError('');}} placeholder="궁금한 점을 입력하세요" rows={3} maxLength={3000} disabled={!canAsk||submitting}/><div className="composer-footer"><span>{composeError?<span className="error-message" role="alert">{composeError}</span>:ready&&room.is_open?'이름 없이 등록됩니다.':initializing?'연결 중…':room&&!room.is_open?'질문 접수가 종료됐습니다.':'연결 후 작성할 수 있습니다.'}</span><button className="primary-button" type="submit" disabled={!canAsk||submitting||!isValidQuestion(input)}>{submitting?'등록 중…':'질문 등록'} <ArrowUp size={18}/></button></div></form>}
+      {discussionTopics.length>0&&<section className="discussion-section" aria-labelledby="discussion-heading">
+        <div className="discussion-heading"><div><span className="overline">DISCUSSION TOPICS</span><h2 id="discussion-heading">상호토의 주제로 갈음</h2></div><span className="discussion-count">{discussionTopics.reduce((count,topic)=>count+topic.content.split('\n').filter(line=>line.trim().startsWith('·')).length,0)}개 주제</span></div>
+        <p className="discussion-description">아래 주제는 별도 상호토의 대상으로 분류하여 일반 질문 및 공감순 정렬에서 제외했습니다.</p>
+        <div className="discussion-list">{discussionTopics.map(topic=><details className="discussion-topic" key={topic.id}><summary>{topic.title.replace(/^상호토의 주제로 갈음\s*[—–:-]\s*/,'')}<span className="discussion-topic-count">{topic.content.split('\n').filter(line=>line.trim().startsWith('·')).length}개</span></summary><ul>{topic.content.split('\n').filter(line=>line.trim().startsWith('·')).map((line,index)=><li key={index}>{line.trim().slice(1).trim()}</li>)}</ul></details>)}</div>
+      </section>}
       <section className="questions-section" aria-labelledby="timeline-heading">
         <div className="timeline-header">
           <div className="timeline-title"><h2 id="timeline-heading" tabIndex={-1}>질문 타임라인</h2><span className="count">{questions.length}건</span></div>

@@ -13,6 +13,7 @@ const posts=[
   question('question-5','2026-11-16T02:00:00.000Z',5,'안전한 작업 환경을 만들기 위한 제안을 어떻게 전달할까요?'),
   question('question-6','2026-11-16T01:00:00.000Z',0,'짧은 질문도 자유롭게 남길 수 있을까요?')
 ];
+const discussion=[{id:'discussion-test',session_id:room.id,status:'open',kind:'idea',title:'상호토의 주제로 갈음 — 조직문화',content:'· 어떤 문화를 지향할까요?\n· 우리 조직의 강점은 무엇일까요?',created_at:'2026-11-15T00:00:00Z',reaction_count:0}];
 const replies=[{id:'reply-1',post_id:'question-4',session_id:room.id,content:longAnswer,created_at:'2026-11-16T03:30:00.000Z',author_role:'ceo'}];
 const liked=new Set();
 const listeners=new Set();
@@ -40,7 +41,7 @@ export const supabase={
     const filters=[],orders=[];
     const matches=row=>filters.every(filter=>filter(row));
     const read=()=>{
-      const source=table==='meeting_posts'?posts:table==='meeting_replies'?replies:table==='meeting_sessions'?[room]:table==='meeting_reactions'?[...liked].map(post_id=>({post_id,session_id:room.id})):[];
+      const source=table==='meeting_posts'?[...posts,...discussion]:table==='meeting_replies'?replies:table==='meeting_sessions'?[room]:table==='meeting_reactions'?[...liked].map(post_id=>({post_id,session_id:room.id})):[];
       const rows=source.filter(matches).map(row=>({...row})).sort((a,b)=>compare(a,b,orders)).slice(start,start+maximum);
       return result(single?(rows[0]??null):rows);
     };
