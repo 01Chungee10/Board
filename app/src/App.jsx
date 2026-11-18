@@ -354,7 +354,7 @@ export default function App(){
   }
 
   return <div className="workshop-page">
-    <header className="top-header"><div className="header-content"><img src={COMPANY_LOGO} alt="현대제철 HYUNDAI STEEL"/><div className="header-right"><span className="workshop-indicator"><span className={`status-dot ${syncStatus==='live'?'live':''}`}/>{ready?'실시간 질문':'연결 확인'}</span><button type="button" className="header-qr" onClick={()=>setShareOpen(true)}><QrCode size={17}/> QR 접속</button>{isHost&&<span className="ceo-mode"><ShieldCheck size={15}/> CEO</span>}</div></div></header>
+    <header className="top-header"><div className="header-content"><img src={COMPANY_LOGO} alt="현대제철 HYUNDAI STEEL"/><div className="header-right"><span className="workshop-indicator"><span className={`status-dot ${syncStatus==='live'?'live':''}`}/>{ready?'실시간 질문':'연결 확인'}</span>{isHost&&<span className="ceo-mode"><ShieldCheck size={15}/> CEO</span>}</div></div></header>
     <main className="main-column">
       <section className="workshop-heading"><div className="heading-copy"><span className="overline">CEO × CHANGE LEADER</span><h1>온라인 워크숍</h1><p>궁금한 점을 자유롭게 남겨주세요.<br/>등록된 질문은 모두에게 바로 공유됩니다.</p></div><img src={MASCOT} alt="" aria-hidden="true"/></section>
       {loadError&&<div className="connection-alert" role="alert"><CircleHelp size={18}/><span>{loadError}</span><button onClick={()=>{if(connected)refresh();else init();}}>재시도</button></div>}
@@ -362,11 +362,6 @@ export default function App(){
       {!initializing&&isHost&&<div className="host-banner"><ShieldCheck size={18}/> CEO 공식 답변 모드입니다. 질문을 선택해 답변할 수 있습니다.</div>}
       {!initializing&&ready&&!room.is_open&&<div className="closed-banner"><Clock3 size={19}/> 질문 접수가 종료되었습니다. 등록된 대화는 계속 볼 수 있습니다.</div>}
       {!isHost&&<form className="question-composer" onSubmit={submitQuestion} aria-label="질문 작성"><label htmlFor="new-question">질문 남기기</label><textarea id="new-question" value={input} onChange={event=>{setInput(event.target.value);if(composeError)setComposeError('');}} placeholder="궁금한 점을 입력하세요" rows={3} maxLength={3000} disabled={!canAsk||submitting}/><div className="composer-footer"><span>{composeError?<span className="error-message" role="alert">{composeError}</span>:ready&&room.is_open?'이름 없이 등록됩니다.':initializing?'연결 중…':room&&!room.is_open?'질문 접수가 종료됐습니다.':'연결 후 작성할 수 있습니다.'}</span><button className="primary-button" type="submit" disabled={!canAsk||submitting||!isValidQuestion(input)}>{submitting?'등록 중…':'질문 등록'} <ArrowUp size={18}/></button></div></form>}
-      {discussionTopics.length>0&&<section className="discussion-section" aria-labelledby="discussion-heading">
-        <div className="discussion-heading"><div><span className="overline">DISCUSSION TOPICS</span><h2 id="discussion-heading">상호토의 주제로 갈음</h2></div><span className="discussion-count">{discussionTopics.reduce((count,topic)=>count+topic.content.split('\n').filter(line=>line.trim().startsWith('·')).length,0)}개 주제</span></div>
-        <p className="discussion-description">아래 주제는 별도 상호토의 대상으로 분류하여 일반 질문 및 공감순 정렬에서 제외했습니다.</p>
-        <div className="discussion-list">{discussionTopics.map(topic=><details className="discussion-topic" key={topic.id}><summary>{topic.title.replace(/^상호토의 주제로 갈음\s*[—–:-]\s*/,'')}<span className="discussion-topic-count">{topic.content.split('\n').filter(line=>line.trim().startsWith('·')).length}개</span></summary><ul>{topic.content.split('\n').filter(line=>line.trim().startsWith('·')).map((line,index)=><li key={index}>{line.trim().slice(1).trim()}</li>)}</ul></details>)}</div>
-      </section>}
       <section className="questions-section" aria-labelledby="timeline-heading">
         <div className="timeline-header">
           <div className="timeline-title"><h2 id="timeline-heading" tabIndex={-1}>질문 타임라인</h2><span className="count">{questions.length}건</span></div>
@@ -382,7 +377,13 @@ export default function App(){
         <span className="sr-only" role="status">{sortOrder==='popular'?'공감 많은 순서':'최신 등록 순서'}로 질문 {questions.length}건을 표시합니다.</span>
         {questions.length===0?<div className="empty-feed"><MessageCircle size={27}/><strong>{initializing?'질문을 불러오는 중입니다.':ready?'아직 등록된 질문이 없습니다.':'워크숍 연결을 확인해 주세요.'}</strong><p>{ready&&room.is_open&&!isHost?'첫 질문을 남겨 대화를 시작해 주세요.':'질문이 등록되면 여기에 표시됩니다.'}</p></div>:<div className="question-feed">{sortedQuestions.map(item=><QuestionRow key={item.id} item={item} index={questionNumbers.get(item.id)} isHost={isHost} onOpen={openQuestion} onLike={toggleLike} canLike={ready} likeBusy={Boolean(likeBusy[item.id])}/>)}</div>}
       </section>
+      {discussionTopics.length>0&&<section className="discussion-section" aria-labelledby="discussion-heading">
+        <div className="discussion-heading"><div><span className="overline">DISCUSSION TOPICS</span><h2 id="discussion-heading">상호토의 주제로 갈음</h2></div><span className="discussion-count">{discussionTopics.reduce((count,topic)=>count+topic.content.split('\n').filter(line=>line.trim().startsWith('·')).length,0)}개 주제</span></div>
+        <p className="discussion-description">아래 주제는 별도 상호토의 대상으로 분류하여 일반 질문 및 공감순 정렬에서 제외했습니다.</p>
+        <div className="discussion-list">{discussionTopics.map(topic=><details className="discussion-topic" key={topic.id}><summary>{topic.title.replace(/^상호토의 주제로 갈음\s*[—–:-]\s*/,'')}<span className="discussion-topic-count">{topic.content.split('\n').filter(line=>line.trim().startsWith('·')).length}개</span></summary><ul>{topic.content.split('\n').filter(line=>line.trim().startsWith('·')).map((line,index)=><li key={index}>{line.trim().slice(1).trim()}</li>)}</ul></details>)}</div>
+      </section>}
     </main>
+    <button type="button" className="floating-qr" aria-label="워크숍 QR 접속 코드 열기" onClick={()=>setShareOpen(true)}><QrCode size={23} aria-hidden="true"/><span>QR 접속</span></button>
     {toast&&<div role="status" className="toast"><CheckCircle2 size={18}/>{toast}</div>}
     {hostOpen&&<HostDialog onClose={()=>setHostOpen(false)} onClaim={claimHost} busy={hostBusy} error={hostError}/>}
     {shareOpen&&<ShareDialog onClose={()=>setShareOpen(false)}/>}

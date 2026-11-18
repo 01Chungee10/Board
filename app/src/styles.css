@@ -210,3 +210,10 @@ button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px soli
 .discussion-topic-count{float:right;background:#e9f3fc;border-radius:99px;padding:2px 8px;color:#235d8a;font-size:12px;margin-inline-start:8px}
 .discussion-topic ul{margin:0;padding:16px 19px 20px 36px;display:grid;gap:12px;color:var(--text);font-size:15px;line-height:1.75;overflow-wrap:anywhere;white-space:pre-wrap}
 @media(max-width:600px){.discussion-section{margin:12px 0 24px;padding:15px}.discussion-heading h2{font-size:20px}.discussion-topic summary{font-size:15px}.discussion-topic ul{font-size:15px;padding-inline:30px 12px}}
+
+/* QR access stays within thumb reach without covering the last discussion card. */
+.floating-qr{position:fixed;z-index:25;inset-inline-end:max(22px,env(safe-area-inset-right));inset-block-end:max(24px,env(safe-area-inset-bottom));display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:58px;padding:14px 20px;border:2px solid #fff;border-radius:999px;background:var(--navy);color:#fff;font-weight:850;font-size:15px;box-shadow:0 8px 28px #002d6254;white-space:nowrap}
+.floating-qr:hover{background:#154c87;box-shadow:0 10px 30px #002d6266}
+.floating-qr:focus-visible{outline:3px solid var(--focus);outline-offset:4px}
+.main-column{padding-bottom:130px}
+@media(max-width:600px){.floating-qr{inset-inline-end:max(14px,env(safe-area-inset-right));inset-block-end:max(14px,env(safe-area-inset-bottom));min-height:54px;padding:11px 16px;font-size:14px}.main-column{padding-bottom:125px}}
