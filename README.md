@@ -101,3 +101,7 @@ npm run stage:production
 - 자료는 별도 열람 영역으로 표시하며 질문 타임라인의 공감·최신순 정렬과 질문 수에는 포함하지 않음
 - 일반 참가자의 등록 질문과 CEO 공식 답변은 기존 운영 DB에서 관리하며 이번 자료 게시에는 DB 변경이 필요하지 않음
 - 사전검토 자료 화면 검증: `tests/browser/prework-section.guard.js`, 결과·화면: `docs/qa/workshop-20261123/`
+
+## 상호토의 주제 화면 숨김 (2026-11-23)
+
+운영 화면에서 `상호토의 주제로 갈음` 영역을 숨겼습니다. `app/src/discussion-topics.js`의 11개 문항과 기존 운영 데이터는 변경하지 않았습니다. 복구 시 `app/src/App.jsx`의 `SHOW_DISCUSSION_TOPICS`를 `true`로 설정한 뒤 재배포하면 됩니다.
