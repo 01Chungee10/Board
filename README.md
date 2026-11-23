@@ -105,3 +105,7 @@ npm run stage:production
 ## 상호토의 주제 화면 숨김 (2026-11-23)
 
 운영 화면에서 `상호토의 주제로 갈음` 영역을 숨겼습니다. `app/src/discussion-topics.js`의 11개 문항과 기존 운영 데이터는 변경하지 않았습니다. 복구 시 `app/src/App.jsx`의 `SHOW_DISCUSSION_TOPICS`를 `true`로 설정한 뒤 재배포하면 됩니다.
+
+## 사전질문 표시 범위 조정 (2026-11-24)
+
+사전질문 영역에서 **1번 AI·DX·AX(DX추진실)**와 **5번 경영 방향(경영전략실)**만 표시합니다. 2~4번 내용은 `app/src/prework-data.js`에 그대로 보존하며, `app/src/PreworkSection.jsx`의 노출 대상 필터를 변경하면 복구할 수 있습니다. 구분 번호(1·5)와 기존 앵커(`#prework-ai-dx-ax`, `#prework-strategy`)를 유지합니다.
