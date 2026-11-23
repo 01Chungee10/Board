@@ -1,0 +1,78 @@
+{
+  "status": "passed",
+  "checked_at": "2026-11-23T00:23:48.763748+00:00",
+  "widths": [
+    320,
+    390,
+    1440
+  ],
+  "scope": [
+    "five-topic-content-preservation",
+    "all38-question-and-answer-bullets",
+    "overview-department-mapping",
+    "native-disclosure-keyboard-and-focus",
+    "responsive-no-overflow",
+    "section-order",
+    "floating-qr",
+    "rtl-reflow",
+    "200-percent-text-resize",
+    "fresh-direct-anchor-navigation"
+  ],
+  "run_history": [
+    {
+      "widths": [
+        320,
+        390,
+        1440
+      ],
+      "result": "320/390 full content-layout-keyboard-QR checks passed;1440 core checks passed. Focus assertion was adjusted to wait for the intended animation-frame focus."
+    },
+    {
+      "widths": [
+        1440
+      ],
+      "result": "Overview focus, RTL and200% text resize passed. Fresh section anchor revealed missing handling and asynchronous feed layout shift; component was corrected to wait for initial feed completion."
+    },
+    {
+      "widths": [
+        390,
+        1440
+      ],
+      "result": "Strategy deep links opened correctly at top23.9px/mobile and54.1px/desktop bottom clamp."
+    },
+    {
+      "widths": [
+        390,
+        1440
+      ],
+      "result": "Section deep links passed after initial feed readiness fix.",
+      "checks": [
+        {
+          "width": 390,
+          "hash": "#prework-section",
+          "status": "passed",
+          "top": 23.796875,
+          "scrollY": 1883,
+          "visibleQuestions": 6
+        },
+        {
+          "width": 1440,
+          "hash": "#prework-section",
+          "status": "passed",
+          "top": 23.8125,
+          "scrollY": 1301,
+          "visibleQuestions": 6
+        }
+      ]
+    }
+  ],
+  "browser_cleanup": {
+    "state": "clean",
+    "remaining_pids": []
+  },
+  "not_verified": [
+    "Screen-reader speech with VoiceOver/NVDA",
+    "Actual browser zoom; 200% text resizing checked instead"
+  ],
+  "mock_server_stopped": true
+}

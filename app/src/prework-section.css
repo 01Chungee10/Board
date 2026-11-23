@@ -1,0 +1,95 @@
+.prework-section {
+  container-name: prework;
+  container-type: inline-size;
+  width: 100%;
+  min-width: 0;
+  margin-block: 4px 40px;
+  padding: 20px 16px;
+  border: 1px solid #d4e1ec;
+  border-radius: 18px;
+  background: #eef4fa;
+  color: var(--text);
+  scroll-margin-block-start: 24px;
+}
+
+.prework-header {margin-block-end: 24px}
+.prework-labels {display: flex; align-items: center; flex-wrap: wrap; gap: 10px; color: #496581; font-size: 13px; font-weight: 750}
+.prework-category {display: inline-block; padding: 5px 9px; border-radius: 7px; background: var(--navy); color: #fff}
+.prework-header h2 {max-width: 40rem; margin: 12px 0 10px; color: var(--navy); font-size: clamp(23px, 2.5vw, 30px); line-height: 1.45; letter-spacing: -.035em; overflow-wrap: anywhere}
+.prework-header > p {margin: 0; color: #48627c; font-size: 15px; line-height: 1.7}
+.prework-tags {display: flex; flex-wrap: wrap; gap: 6px 10px; list-style: none; margin: 14px 0 0; padding: 0}
+.prework-tags li {padding: 4px 8px; border-radius: 6px; background: #fff; color: #496581; font-size: 12px; font-weight: 650; line-height: 1.5}
+.prework-grid {display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 24px}
+.prework-overview {min-width: 0; padding: 14px 12px; border: 1px solid var(--line); border-radius: 13px; background: #fff}
+.prework-table {width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 13px; line-height: 1.65; text-align: start; overflow-wrap: anywhere}
+.prework-table caption {padding-block-end: 12px; color: var(--navy); font-size: 16px; font-weight: 850; text-align: start}
+.prework-number-col {width: 2.2rem}
+.prework-department-col {width: 5.5rem}
+.prework-table th, .prework-table td {vertical-align: top; padding: 10px 4px; border-block-end: 1px solid #e5edf4; text-align: start}
+.prework-table thead th {padding-block: 8px; color: #526b84; background: #f3f7fb; font-size: 12px; font-weight: 750}
+.prework-table tbody th {font-weight: 700}
+.prework-table tbody tr:last-child > * {border-block-end: 0}
+.prework-table tbody td:first-child {color: #536e88; font-variant-numeric: tabular-nums}
+.prework-table a {display: flex; align-items: flex-start; min-height: 44px; color: var(--navy); text-decoration: underline; text-decoration-color: #a2bbd2; text-underline-offset: 4px; overflow-wrap: anywhere}
+.prework-table a:hover {text-decoration-color: currentColor}
+.prework-overview-hint {margin: 14px 0 0; color: #526b84; font-size: 12px; line-height: 1.7}
+.prework-topics {display: grid; min-width: 0; gap: 12px}
+.prework-topic {min-width: 0; border: 1px solid #d3e0ec; border-radius: 13px; background: #fff; scroll-margin-block-start: 24px; scroll-margin-block-end: 100px}
+.prework-topic[open] {border-color: #a8c1d8}
+.prework-summary {padding: 16px 14px; border-radius: 12px; list-style: none; cursor: pointer}
+.prework-summary::-webkit-details-marker {display: none}
+.prework-summary:hover {background: #f8fbfe}
+.prework-summary h3 {display: grid; grid-template-columns: 30px minmax(0, 1fr) 38px; align-items: start; gap: 10px; margin: 0; font-size: 17px; line-height: 1.6; letter-spacing: -.02em; font-weight: 850}
+.prework-topic-number {display: inline-grid; place-items: center; width: 30px; min-height: 30px; border-radius: 8px; background: #eaf2fa; color: var(--navy); font-size: 14px; font-weight: 850; font-variant-numeric: tabular-nums}
+.prework-summary-copy {display: block; min-width: 0}
+.prework-topic-title {display: block; color: var(--navy); overflow-wrap: anywhere}
+.prework-department {display: block; margin-block-start: 6px; color: #355a7c; font-size: 13px; font-weight: 750; line-height: 1.65; overflow-wrap: anywhere}
+.prework-department > span {margin-inline-end: 4px; color: #5c7287; font-weight: 500}
+.prework-disclosure {display: flex; flex-direction: column; align-items: center; gap: 3px; padding-block-start: 3px; color: #365f85; font-size: 11px; font-weight: 700; line-height: 1.4}
+.prework-disclosure svg {flex-shrink: 0}
+.prework-when-open {display: none}
+.prework-topic[open] > .prework-summary .prework-when-open {display: inline}
+.prework-topic[open] > .prework-summary .prework-when-closed {display: none}
+.prework-topic[open] > .prework-summary .prework-disclosure svg {transform: rotate(180deg)}
+.prework-topic-body {min-width: 0; padding: 4px 16px 22px}
+.prework-entry {max-width: 52rem; min-width: 0}
+.prework-entry + .prework-entry {margin-block-start: 32px}
+.prework-entry h4 {margin: 0 0 12px; color: #153f69; font-size: 17px; font-weight: 800; line-height: 1.75; overflow-wrap: anywhere}
+.prework-question-list, .prework-answer-list {margin: 0; padding-inline-start: 21px; font-size: 16px; line-height: 1.85; word-break: keep-all; overflow-wrap: anywhere}
+.prework-question-list li + li, .prework-answer-list li + li {margin-block-start: 9px}
+.prework-question-list li::marker {color: #6888a5}
+.prework-question-list {margin-block-end: 20px; color: #3c5771}
+.prework-answer {padding: 16px; border-radius: 10px; background: #f3f7fb}
+.prework-answer-label {margin: 0 0 12px; color: #235d8d; font-size: 13px; line-height: 1.6; font-weight: 850}
+.prework-answer-list {color: #243f59}
+.prework-answer-list li::marker {color: #46789e}
+.prework-answer-list strong {color: #143e66; font-weight: 850}
+.prework-section a:focus-visible, .prework-summary:focus-visible {outline: 3px solid var(--navy); outline-offset: 4px}
+.prework-section a:focus-visible {border-radius: 3px}
+
+@container prework (min-width: 640px) {
+  .prework-header {margin-block-end: 28px}
+  .prework-overview {padding: 18px}
+  .prework-table {font-size: 14px}
+  .prework-number-col {width: 2.8rem}
+  .prework-department-col {width: 7rem}
+  .prework-table th, .prework-table td {padding-inline: 8px}
+  .prework-summary {padding: 20px}
+  .prework-summary h3 {grid-template-columns: 34px minmax(0, 1fr) 40px; gap: 14px; font-size: 19px}
+  .prework-topic-number {width: 34px; min-height: 34px; font-size: 15px}
+  .prework-topic-body {padding-block: 4px 28px; padding-inline: 68px 24px}
+  .prework-entry h4 {font-size: 18px}
+  .prework-answer {padding: 18px 20px}
+}
+
+@container prework (min-width: 1120px) {
+  .prework-grid {grid-template-columns: minmax(280px, .36fr) minmax(0, 1fr); gap: 24px}
+  .prework-overview {padding: 18px 14px}
+  .prework-department-col {width: 6.1rem}
+  .prework-table th, .prework-table td {padding-inline: 5px}
+}
+
+@media (forced-colors: active) {
+  .prework-section a:focus-visible, .prework-summary:focus-visible {outline-color: Highlight}
+  .prework-topic, .prework-overview, .prework-answer {border: 1px solid CanvasText}
+}
