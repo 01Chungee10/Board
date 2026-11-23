@@ -58,10 +58,9 @@ export default function PreworkSection({layoutReady = true}) {
       <div className="prework-overview">
         <table className="prework-table">
           <caption>주제별 답변 부서</caption>
-          <colgroup><col className="prework-number-col"/><col/><col className="prework-department-col"/></colgroup>
-          <thead><tr><th scope="col">구분</th><th scope="col">주제</th><th scope="col">답변 부서</th></tr></thead>
+          <colgroup><col/><col className="prework-department-col"/></colgroup>
+          <thead><tr><th scope="col">주제</th><th scope="col">답변 부서</th></tr></thead>
           <tbody>{sections.map(topic => <tr key={topic.id}>
-            <td>{topic.number}</td>
             <th scope="row"><a href={`#prework-${topic.id}`} onClick={event => openTopic(event, topic.id)}>{topic.topic}</a></th>
             <td>{topic.department}</td>
           </tr>)}</tbody>
@@ -79,7 +78,6 @@ export default function PreworkSection({layoutReady = true}) {
         >
           <summary className="prework-summary">
             <h3>
-              <span className="prework-topic-number">{topic.number}</span>
               <span className="prework-summary-copy">
                 <span className="prework-topic-title">{topic.heading}</span>
                 <span className="prework-department"><span>답변 부서</span> {topic.department}</span>

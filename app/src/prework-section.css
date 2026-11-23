@@ -39,7 +39,7 @@
 .prework-summary {padding: 16px 14px; border-radius: 12px; list-style: none; cursor: pointer}
 .prework-summary::-webkit-details-marker {display: none}
 .prework-summary:hover {background: #f8fbfe}
-.prework-summary h3 {display: grid; grid-template-columns: 30px minmax(0, 1fr) 38px; align-items: start; gap: 10px; margin: 0; font-size: 17px; line-height: 1.6; letter-spacing: -.02em; font-weight: 850}
+.prework-summary h3 {display: grid; grid-template-columns: minmax(0, 1fr) 38px; align-items: start; gap: 10px; margin: 0; font-size: 17px; line-height: 1.6; letter-spacing: -.02em; font-weight: 850}
 .prework-topic-number {display: inline-grid; place-items: center; width: 30px; min-height: 30px; border-radius: 8px; background: #eaf2fa; color: var(--navy); font-size: 14px; font-weight: 850; font-variant-numeric: tabular-nums}
 .prework-summary-copy {display: block; min-width: 0}
 .prework-topic-title {display: block; color: var(--navy); overflow-wrap: anywhere}
@@ -75,9 +75,9 @@
   .prework-department-col {width: 7rem}
   .prework-table th, .prework-table td {padding-inline: 8px}
   .prework-summary {padding: 20px}
-  .prework-summary h3 {grid-template-columns: 34px minmax(0, 1fr) 40px; gap: 14px; font-size: 19px}
+  .prework-summary h3 {grid-template-columns: minmax(0, 1fr) 40px; gap: 14px; font-size: 19px}
   .prework-topic-number {width: 34px; min-height: 34px; font-size: 15px}
-  .prework-topic-body {padding-block: 4px 28px; padding-inline: 68px 24px}
+  .prework-topic-body {padding-block: 4px 28px; padding-inline: 24px 24px}
   .prework-entry h4 {font-size: 18px}
   .prework-answer {padding: 18px 20px}
 }

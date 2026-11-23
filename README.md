@@ -109,3 +109,7 @@ npm run stage:production
 ## 사전질문 표시 범위 조정 (2026-11-24)
 
 사전질문 영역에서 **1번 AI·DX·AX(DX추진실)**와 **5번 경영 방향(경영전략실)**만 표시합니다. 2~4번 내용은 `app/src/prework-data.js`에 그대로 보존하며, `app/src/PreworkSection.jsx`의 노출 대상 필터를 변경하면 복구할 수 있습니다. 구분 번호(1·5)와 기존 앵커(`#prework-ai-dx-ax`, `#prework-strategy`)를 유지합니다.
+
+## 번호 열 제거 (2026-11-24)
+
+두 주제의 표에서 구분 번호와 번호 열을 제거하고, 상세 펼침 제목의 번호 표시도 제거했습니다. 원본 데이터와 `#prework-ai-dx-ax`, `#prework-strategy` 링크는 보존합니다.
