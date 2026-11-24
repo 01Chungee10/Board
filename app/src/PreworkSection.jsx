@@ -14,10 +14,7 @@ function InlineText({text}) {
 export default function PreworkSection({layoutReady = true}) {
   const sectionRef = useRef(null);
   const topicRefs = useRef(new Map());
-  const {title, category} = PREWORK_DOCUMENT;
-  // Other topics remain in the source for later restoration; show only 1 and 5.
-  const sections = PREWORK_DOCUMENT.sections.filter(topic => ['ai-dx-ax', 'strategy'].includes(topic.id));
-  const tags = PREWORK_DOCUMENT.tags.filter(tag => ['AI·DX·AX', '경영방향'].includes(tag));
+  const {title, category, sections, tags} = PREWORK_DOCUMENT;
 
   useEffect(() => {
     const revealHash = () => {

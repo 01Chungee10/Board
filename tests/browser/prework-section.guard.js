@@ -1,6 +1,5 @@
 async(page)=>{
   const url='http://127.0.0.1:5198/Board/';
-  const evidence='docs/qa/workshop-20261123/';
   const errors=[],blocked=[],checks=[];
   const assert=(condition,message)=>{if(!condition)throw new Error(message);};
   const normalize=value=>value.replace(/\*\*/g,'').replace(/\s+/g,' ').trim();
@@ -31,22 +30,22 @@ async(page)=>{
     await page.setViewportSize({width,height:900});
     const response=await page.goto(url,{waitUntil:'domcontentloaded'});
     assert(response.status()===200,'Local test page did not load');
-    await page.waitForFunction(()=>window.__workshopFixture&&document.querySelectorAll('.question-item').length===6&&document.querySelectorAll('.prework-topic').length===5);
+    await page.waitForFunction(()=>window.__workshopFixture&&document.querySelectorAll('.question-item').length===6&&document.querySelectorAll('.prework-topic').length===2);
     assert(await section().getAttribute('aria-labelledby')==='prework-heading','Section needs its labelled landmark');
     assert(await section().locator('#prework-heading').innerText()==='CL → CEO 사전질문 및 현업검토의견','Document title mismatch');
     const placement=await page.evaluate(()=>{
-      const general=document.querySelector('.questions-section'),prework=document.querySelector('.prework-section'),discussion=document.querySelector('.discussion-section');
-      return Boolean(general.compareDocumentPosition(prework)&Node.DOCUMENT_POSITION_FOLLOWING)&&Boolean(prework.compareDocumentPosition(discussion)&Node.DOCUMENT_POSITION_FOLLOWING);
+      const general=document.querySelector('.questions-section'),prework=document.querySelector('.prework-section');
+      return Boolean(general.compareDocumentPosition(prework)&Node.DOCUMENT_POSITION_FOLLOWING)&&!document.querySelector('.discussion-section');
     });
-    assert(placement,'Prework must follow questions and precede lower discussion');
+    assert(placement,'Prework must follow questions; discussion must remain hidden');
     const expected=await page.evaluate(async()=>{
       const {PREWORK_DOCUMENT}=await import('/Board/src/prework-data.js');
       return PREWORK_DOCUMENT;
     });
-    assert(expected.sections.length===5,'Expected five distinct departments/topics');
-    assert(expected.sections.flatMap(s=>s.entries).length===7,'Expected seven Q entries');
+    assert(expected.sections.map(topic=>topic.id).join() === 'ai-dx-ax,strategy','Expected only the two approved topics in public source');
+    assert(expected.sections.flatMap(s=>s.entries).length===4,'Expected four Q entries');
     const rows=await section().locator('table tbody tr').evaluateAll(nodes=>nodes.map(node=>[...node.querySelectorAll('td,th')].map(cell=>cell.textContent.replace(/\s+/g,' ').trim())));
-    assert(rows.length===5,'Overview table must have five topic mappings');
+    assert(rows.length===2,'Overview table must have two topic mappings');
     expected.sections.forEach((topic,index)=>{
       assert(rows[index].some(cell=>cell===topic.department),'Overview department mismatch '+topic.id);
       assert(rows[index].some(cell=>cell.includes(topic.topic)),'Overview topic mismatch '+topic.id);
@@ -54,9 +53,8 @@ async(page)=>{
     await topics().evaluateAll(nodes=>nodes.forEach(node=>{node.open=false;}));
     await noOverflow('Collapsed '+width);
     await section().evaluate(node=>node.scrollIntoView({block:'start',behavior:'instant'}));
-    await page.screenshot({path:evidence+'prework-overview-'+width+'.png',fullPage:false});
 
-    for(let i=0;i<5;i++){
+    for(let i=0;i<expected.sections.length;i++){
       const topic=topics().nth(i),summary=topic.locator(':scope > summary');
       await summary.focus();
       await page.keyboard.press('Enter');
@@ -82,13 +80,11 @@ async(page)=>{
     for(const sentinel of [
       "Steel-X 기반으로 현업이 직접 AI 에이전트를 만들고 활용하는 환경 확대(Steel-X: 범용 AI·업무맞춤형 에이전트의 중심 플랫폼으로 육성)",
       "Copilot: '26.12월 수요조사 착수 → 단계적 전사 확산",
-      "매년 1분기 전사 정기 순환근무 시행 (팀 근속 3년 이상 중심), '26년 약 250명(일반·연구직 비직책자의 약 8.3%) → '27년 지속 운영",
-      "커리어 프로필('26.2Q 신설)은 '27년부터 본부 전환배치 참고자료 활용 (이동보장 아님)",
-      "셔틀버스: 노사 후생TF(11/24~)에서 논의 예정, 간선도로 중심 운영 및 기존 노선 합리화(시외 장거리는 당진시 설득 필요)",
       "인도·미국 판매 네트워크 확충"
     ])assert(text.includes(normalize(sentinel)),'Literal source detail missing: '+sentinel);
-    assert(await section().locator('li').count()>=38,'Question/answer bullet list incomplete');
-    assert(await section().locator('strong').count()>=8,'Original bold labels not rendered');
+    const expectedBullets=expected.tags.length+expected.sections.flatMap(t=>t.entries).reduce((n,e)=>n+e.questions.length+e.answers.length,0);
+    assert(await section().locator('li').count()===expectedBullets,'Question/answer bullet list incomplete');
+    assert(await section().locator('strong').count()>0,'Original bold labels not rendered');
     await noOverflow('Expanded '+width);
     const finalBullet=topics().last().locator('li').last();
     await finalBullet.scrollIntoViewIfNeeded();
@@ -111,7 +107,6 @@ async(page)=>{
     if(width===390||width===1440){
       await topics().evaluateAll(nodes=>nodes.forEach((node,index)=>{node.open=index===0;}));
       await topics().first().evaluate(node=>node.scrollIntoView({block:'start',behavior:'instant'}));
-      await page.screenshot({path:evidence+'prework-expanded-'+width+'.png',fullPage:false});
     }
     if(width===1440){
       const navLinks=section().locator('table a[href^="#prework-"]');
@@ -142,7 +137,7 @@ async(page)=>{
       for(const hash of ['#prework-section','#prework-strategy']){
         await page.goto('about:blank');
         await page.goto(url+hash,{waitUntil:'load'});
-        await page.waitForFunction(()=>window.__workshopFixture&&document.querySelectorAll('.prework-topic').length===5);
+        await page.waitForFunction(()=>window.__workshopFixture&&document.querySelectorAll('.prework-topic').length===2);
         await page.waitForFunction(hash=>{
           const target=document.querySelector(hash);
           if(!target)return false;
@@ -156,7 +151,7 @@ async(page)=>{
     }
     assert(errors.length===0,'JavaScript errors: '+JSON.stringify(errors));
     assert(await page.evaluate(()=>window.__workshopFixture.mutations.length===0),'Prework reading caused a data mutation');
-    checks.push({name:'Five topics, 38 full bullets, mappings, native keyboard focus, no overflow, floating QR',width,status:'passed'});
+    checks.push({name:'Two topics, full bullets, mappings, native keyboard focus, no overflow, floating QR',width,status:'passed'});
   }
   const unexpected=blocked.filter(url=>!url.startsWith('https://fonts.googleapis.com/')&&!url.startsWith('https://fonts.gstatic.com/'));
   assert(unexpected.length===0,'Unexpected external requests: '+JSON.stringify(unexpected));
