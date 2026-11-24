@@ -45,7 +45,7 @@ CEO 코드는 **반드시 현장에서 본인에게 직접 전달**해야 합니
 ## 운영 환경
 
 - **Frontend:** GitHub Pages (`gh-pages`), React, Vite
-- **Database:** Supabase 서울 리전 `nianjjguagrddzbelcao`
+- **Database:** Supabase 서울 리전 `ovhhiwntyoqwqyphoqga` (현행 운영). 이전 프로젝트 `nianjjguagrddzbelcao`는 보존·백업 중이며 현 사이트에서 사용하지 않음
 - **인증 방식:** 방문 즉시 Supabase anonymous auth → `join_public_workshop()` 자동 실행
 - **RLS:** 참가자와 CEO 역할은 서버 테이블에서 관리. 클라이언트는 직접 역할을 설정할 수 없음
 - **기존 데이터:** 같은 `meeting_posts`/`meeting_replies` 구조 사용, 기존 작성글 유지
@@ -113,3 +113,12 @@ npm run stage:production
 ## 번호 열 제거 (2026-11-24)
 
 두 주제의 표에서 구분 번호와 번호 열을 제거하고, 상세 펼침 제목의 번호 표시도 제거했습니다. 원본 데이터와 `#prework-ai-dx-ax`, `#prework-strategy` 링크는 보존합니다.
+
+## Supabase 운영 프로젝트 전환 (2026-11-25)
+
+- 기존 GitHub 저장소 `01Chungee10/Board`와 Pages 주소를 유지하며 Supabase만 `ovhhiwntyoqwqyphoqga` (`01Chungee10's Org`, 서울)로 이전했습니다.
+- 게시글 21건(공개 4/숨김 17), 작성자 연결 21건, 공감 20건, 참가자 116건, 과거 Auth 참조 116건, 워크숍 세션 및 비공개 인증 설정을 보존했습니다. 기존 Auth 세션은 새 프로젝트로 이전되지 않으므로 이용자는 새로운 익명 세션으로 참가합니다.
+- 새 데이터 API에서 익명 로그인·참가 RPC·공개 질문 조회·공감 추가/취소를 검증했습니다.
+- 로컬 비공개 `app/.env.production.local`에 신규 URL과 브라우저용 publishable key를 설정했습니다. 공개 빌드에 서비스 역할 비밀키를 포함하지 않습니다.
+- 폐쇄된 계정과 연결됐던 구 Supabase 프로젝트는 삭제하지 않습니다. CLI 원격 링크가 옛 프로젝트를 가리킬 수 있으므로 관리 시 재확인하십시오.
+- 세부 이전 증빙은 `docs/SUPABASE_MIGRATION_2026-11-25.md`에 있습니다.
