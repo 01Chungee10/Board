@@ -8,6 +8,8 @@ import {supabase} from './supabase.js';
 import {DISCUSSION_TOPICS} from './discussion-topics.js';
 // Keep curated topics intact for restoration; hide the section until re-enabled.
 const SHOW_DISCUSSION_TOPICS = false;
+// Restore by switching this flag to true; original prework content is preserved.
+const SHOW_PREWORK_SECTION = false;
 import PreworkSection from './PreworkSection.jsx';
 import {attachReactions,attachReplies,isValidQuestion,makeQuestionTitle,sortQuestions} from './workshop-utils.js';
 
@@ -381,7 +383,7 @@ export default function App(){
         <span className="sr-only" role="status">{sortOrder==='popular'?'공감 많은 순서':'최신 등록 순서'}로 질문 {questions.length}건을 표시합니다.</span>
         {questions.length===0?<div className="empty-feed"><MessageCircle size={27}/><strong>{initializing?'질문을 불러오는 중입니다.':ready?'아직 등록된 질문이 없습니다.':'워크숍 연결을 확인해 주세요.'}</strong><p>{ready&&room.is_open&&!isHost?'첫 질문을 남겨 대화를 시작해 주세요.':'질문이 등록되면 여기에 표시됩니다.'}</p></div>:<div className="question-feed">{sortedQuestions.map(item=><QuestionRow key={item.id} item={item} index={questionNumbers.get(item.id)} isHost={isHost} onOpen={openQuestion} onLike={toggleLike} canLike={ready} likeBusy={Boolean(likeBusy[item.id])}/>)}</div>}
       </section>
-      <PreworkSection layoutReady={!initializing&&(!room||initialFeedSettled)}/>
+      {SHOW_PREWORK_SECTION&&<PreworkSection layoutReady={!initializing&&(!room||initialFeedSettled)}/>}
       {SHOW_DISCUSSION_TOPICS&&discussionTopics.length>0&&<section className="discussion-section" aria-labelledby="discussion-heading">
         <div className="discussion-heading"><div><span className="overline">DISCUSSION TOPICS</span><h2 id="discussion-heading">상호토의 주제로 갈음</h2></div><span className="discussion-count">{discussionTopics.reduce((count,topic)=>count+topic.content.split('\n').filter(line=>line.trim().startsWith('·')).length,0)}개 주제</span></div>
         <p className="discussion-description">아래 주제는 별도 상호토의 대상으로 분류하여 일반 질문 및 공감순 정렬에서 제외했습니다.</p>

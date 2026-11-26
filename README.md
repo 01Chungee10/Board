@@ -122,3 +122,7 @@ npm run stage:production
 - 로컬 비공개 `app/.env.production.local`에 신규 URL과 브라우저용 publishable key를 설정했습니다. 공개 빌드에 서비스 역할 비밀키를 포함하지 않습니다.
 - 폐쇄된 계정과 연결됐던 구 Supabase 프로젝트는 삭제하지 않습니다. CLI 원격 링크가 옛 프로젝트를 가리킬 수 있으므로 관리 시 재확인하십시오.
 - 세부 이전 증빙은 `docs/SUPABASE_MIGRATION_2026-11-25.md`에 있습니다.
+
+## 사전질문 및 현업검토의견 전체 숨김 (2026-11-27)
+
+운영 화면에서 하단 `CL → CEO 사전질문 및 현업검토의견` 영역 전체를 **숨김 처리**합니다. `app/src/prework-data.js`의 기존 두 주제와 현업검토의견 원문, `PreworkSection.jsx` 컴포넌트는 삭제하지 않습니다. 복구 시 `app/src/App.jsx`의 `SHOW_PREWORK_SECTION`을 `true`로 설정하고 재배포하면 됩니다. 화면에서 영역과 제목·표·상세 항목이 렌더링되지 않으며, 기존 질문 작성·공감·QR 및 다른 영역은 변경하지 않습니다.
